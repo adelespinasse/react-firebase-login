@@ -40,4 +40,4 @@ This is a starter template for creating React component libraries using Vite. It
 
 ## License
 
-MIT
+(c) 2025 Alan deLespinasse. Permission to use is NOT currently granted. Probably when it's ready.
