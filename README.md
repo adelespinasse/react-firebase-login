@@ -1,3 +1,11 @@
+# react-firebase-login
+
+A set of React components that make it stupidly simple to add Firebase Authentication login to a React app.
+
+Status: Not ready for use!
+
+Initialized using the [Vite React Component Library Starter](https://github.com/rayyamhk/vite-react-component-library-starter).
+
 # Vite React Component Library Starter
 
 This is a starter template for creating React component libraries using Vite. It includes a robust set of features to help you develop, test, and build your library efficiently.
