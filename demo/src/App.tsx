@@ -2,7 +2,7 @@ import React from 'react';
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
-import { SignInUI, SignOutButton, RequireLogin } from '../../lib';
+import { LogOutButton, SimpleLogInPage } from '../../lib';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCnT91mQqEiQW6yS2lAbbezpnUX8pzk_no",
@@ -15,16 +15,22 @@ const firebaseConfig = {
 
 initializeApp(firebaseConfig);
 
+function InnerContent() {
+  return (
+    <div>
+      <p>
+        Logged in as { getAuth().currentUser?.email }
+      </p>
+      <LogOutButton />
+    </div>
+  );
+}
+
 function App() {
   return (
-    <div className="App">
-      <RequireLogin loginComponent={<SignInUI methods={['email', 'google']} popup />}>
-        <div>
-          Logged in as { getAuth().currentUser?.email }
-        </div>
-        <SignOutButton />
-      </RequireLogin>
-    </div>
+    <SimpleLogInPage methods={['email', 'google']} popup>
+      <InnerContent />
+    </SimpleLogInPage>
   );
 }
 

@@ -1,29 +1,29 @@
 import React, { useCallback } from 'react';
 import { type Auth, getAuth, signOut } from 'firebase/auth';
 
-export type SignOutButtonProps = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & {
+export type LogOutButtonProps = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & {
   auth?: Auth;
-  onSignOut?: () => void;
+  onLogOut?: () => void;
 };
 
-export function SignOutButton({ auth, onSignOut, ...rest }: SignOutButtonProps) {
+export function LogOutButton({ auth, onLogOut, ...rest }: LogOutButtonProps) {
   const onClick = useCallback(async () => {
     try {
       await signOut(auth || getAuth());
-      if (onSignOut) {
-        onSignOut();
+      if (onLogOut) {
+        onLogOut();
       }
     } catch (error) {
       alert(`Error signing out: ${(error as Error).message}`);
     }
-  }, [auth, onSignOut]);
+  }, [auth, onLogOut]);
 
   return (
     <button
       onClick={onClick}
       {...rest}
     >
-      Sign Out
+      Log Out
     </button>
   );
 }

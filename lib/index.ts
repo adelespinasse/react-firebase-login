@@ -1,5 +1,6 @@
 import './global.css';
 
-export * from './SignInUI';
+export * from './LogInUI';
+export * from './LogOutButton';
 export * from './RequireLogin';
-export * from './SignOutButton';
+export * from './SimpleLogInPage';

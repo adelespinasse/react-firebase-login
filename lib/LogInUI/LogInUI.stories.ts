@@ -1,20 +1,20 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
-import { SignInUI } from './SignInUI';
+import { LogInUI } from './LogInUI';
 
 const meta = {
-  title: 'SignInUI',
-  component: SignInUI,
+  title: 'LogInUI',
+  component: LogInUI,
   parameters: {
     layout: 'centered',
   },
-} satisfies Meta<typeof SignInUI>;
+} satisfies Meta<typeof LogInUI>;
 
 export default meta;
 
-type Story = StoryObj<typeof SignInUI>;
+type Story = StoryObj<typeof LogInUI>;
 
-export const DefaultSignInUI: Story = {
+export const DefaultLogInUI: Story = {
   args: {
     methods: ['google', 'email'],
     popup: false,

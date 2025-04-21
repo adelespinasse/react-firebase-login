@@ -67,17 +67,15 @@ const linkStyle = {
   cursor: 'pointer',
 };
 
-export type SignInMethod = 'google' | 'email';
+export type LogInMethod = 'google' | 'email';
 
-export type SignInUIProps = {
+export type LogInUIProps = {
   auth?: Auth;
-  methods: SignInMethod[];
+  methods: LogInMethod[];
   popup?: boolean;
 };
 
-console.log('PROVIDER_ID:', GoogleAuthProvider.PROVIDER_ID);
-
-export function SignInUI({ auth, methods, popup }: SignInUIProps) {
+export function LogInUI({ auth, methods, popup }: LogInUIProps) {
   const [emailState, setEmailState] = useState<'none' | 'signin' | 'create'>('none');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -88,8 +86,6 @@ export function SignInUI({ auth, methods, popup }: SignInUIProps) {
 
   const signIn = useCallback(
     async (provider: AuthProvider) => {
-      console.log('signIn', provider);
-      console.log(provider.providerId);
       try {
         if (popup) {
           await signInWithPopup(authInstance, provider);
@@ -277,7 +273,7 @@ export function SignInUI({ auth, methods, popup }: SignInUIProps) {
   };
 
   return (
-    <div style={containerStyle}>
+    <div style={containerStyle} className="react-firebase-login-ui-container">
       {inner()}
       {error && <div style={{ color: 'red' }}>{error}</div>}
     </div>

@@ -1,20 +1,20 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
-import { SignOutButton } from './SignOutButton';
+import { LogOutButton } from './LogOutButton';
 
 const meta = {
-  title: 'SignOutButton',
-  component: SignOutButton,
+  title: 'LogOutButton',
+  component: LogOutButton,
   parameters: {
     layout: 'centered',
   },
-} satisfies Meta<typeof SignOutButton>;
+} satisfies Meta<typeof LogOutButton>;
 
 export default meta;
 
-type Story = StoryObj<typeof SignOutButton>;
+type Story = StoryObj<typeof LogOutButton>;
 
-export const DefaultSignInUI: Story = {
+export const DefaultLogInUI: Story = {
   args: {
     style: {
       backgroundColor: '#4275a4',
@@ -24,7 +24,7 @@ export const DefaultSignInUI: Story = {
       border: 'none',
       cursor: 'pointer',
     },
-    onSignOut: () => {
+    onLogOut: () => {
       alert('Signed out');
     },
   },
