@@ -29,10 +29,12 @@
   },
   "scripts": {
     "dev": "storybook dev -p 6006",
+    "demo": "vite --config vite.config.demo.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "storybook build",
     "build:lib": "tsc && vite build",
+    "build:demo": "vite build --config vite.config.demo.ts",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "format": "prettier . --write --ignore-unknown",
     "prepare": "husky install",
