@@ -1,0 +1,30 @@
+import { type PropsWithChildren } from 'react';
+import { LogInUI, type LogInUIProps, RequireLogin } from '..';
+
+export type SimpleLogInPageProps = PropsWithChildren<LogInUIProps & {
+  header?: React.ReactNode;
+  footer?: React.ReactNode;
+}>;
+
+export function SimpleLogInPage({ auth, methods, popup, header, footer, children }: SimpleLogInPageProps) {
+  return (
+    <RequireLogin
+      loginComponent={
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          width: '100vw',
+        }}>
+          { header }
+          <LogInUI auth={auth} methods={methods} popup={popup} />
+          { footer }
+        </div>
+      }
+    >
+      { children }
+    </RequireLogin>
+  );
+}

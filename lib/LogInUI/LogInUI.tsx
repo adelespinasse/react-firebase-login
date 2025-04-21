@@ -71,7 +71,7 @@ export type LogInMethod = 'google' | 'email';
 
 export type LogInUIProps = {
   auth?: Auth;
-  methods: LogInMethod[];
+  methods?: LogInMethod[];
   popup?: boolean;
 };
 
@@ -124,7 +124,7 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
     const createButtonDisabled = loading || !email || !password || !confirmPassword;
     switch (emailState) {
       case 'none':
-        return methods.map((method) => methodMap[method]);
+        return (methods || ['google']).map((method) => methodMap[method]);
       case 'signin':
         return (
           <div>

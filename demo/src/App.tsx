@@ -1,4 +1,3 @@
-import React from 'react';
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
@@ -28,7 +27,11 @@ function InnerContent() {
 
 function App() {
   return (
-    <SimpleLogInPage methods={['email', 'google']} popup>
+    <SimpleLogInPage
+      methods={['email', 'google']}
+      popup
+      header={<h1>Demo App</h1>}
+    >
       <InnerContent />
     </SimpleLogInPage>
   );
