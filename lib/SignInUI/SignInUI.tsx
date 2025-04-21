@@ -2,12 +2,13 @@ import { useCallback, useState } from 'react';
 import {
   type Auth,
   type AuthProvider,
+  getAuth,
   GoogleAuthProvider,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
-} from "firebase/auth";
+} from 'firebase/auth';
 import { GoogleLoginButton, createButton } from 'react-social-login-buttons';
 
 const EmailLoginButton = createButton({
@@ -24,6 +25,7 @@ const containerStyle = {
   'flex-direction': 'column',
   maxWidth: '20em',
   backgroundColor: '#fff',
+  color: '#000',
   padding: '1em',
 };
 
@@ -34,7 +36,7 @@ const buttonContainerStyle = {
   marginBottom: '0.5em',
   width: '100%',
   gap: '0.5em',
-}
+};
 
 const buttonStyle = {
   backgroundColor: '#4275a4',
@@ -68,10 +70,12 @@ const linkStyle = {
 export type SignInMethod = 'google' | 'email';
 
 export type SignInUIProps = {
-  auth: Auth;
+  auth?: Auth;
   methods: SignInMethod[];
   popup?: boolean;
 };
+
+console.log('PROVIDER_ID:', GoogleAuthProvider.PROVIDER_ID);
 
 export function SignInUI({ auth, methods, popup }: SignInUIProps) {
   const [emailState, setEmailState] = useState<'none' | 'signin' | 'create'>('none');
@@ -80,27 +84,38 @@ export function SignInUI({ auth, methods, popup }: SignInUIProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const authInstance = auth || getAuth();
 
   const signIn = useCallback(
-    (provider: AuthProvider) => {
-      if (popup) {
-        signInWithPopup(auth, provider);
-      } else {
-        signInWithRedirect(auth, provider);
+    async (provider: AuthProvider) => {
+      console.log('signIn', provider);
+      console.log(provider.providerId);
+      try {
+        if (popup) {
+          await signInWithPopup(authInstance, provider);
+        } else {
+          await signInWithRedirect(authInstance, provider);
+        }
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
       }
     },
-    [auth, popup],
+    [authInstance, popup],
   );
 
   const methodMap = {
     google: (
       <GoogleLoginButton
         onClick={() => signIn(new GoogleAuthProvider())}
+        key="google"
       />
     ),
     email: (
       <EmailLoginButton
         onClick={() => setEmailState('signin')}
+        key="email"
       />
     ),
   };
@@ -113,7 +128,7 @@ export function SignInUI({ auth, methods, popup }: SignInUIProps) {
     const createButtonDisabled = loading || !email || !password || !confirmPassword;
     switch (emailState) {
       case 'none':
-        return methods.map((method) => (methodMap[method]));
+        return methods.map((method) => methodMap[method]);
       case 'signin':
         return (
           <div>
@@ -141,7 +156,7 @@ export function SignInUI({ auth, methods, popup }: SignInUIProps) {
               <button
                 onClick={() => {
                   setLoading(true);
-                  signInWithEmailAndPassword(auth, email, password)
+                  signInWithEmailAndPassword(authInstance, email, password)
                     .catch((err) => {
                       setError(err.message);
                     })
@@ -167,7 +182,7 @@ export function SignInUI({ auth, methods, popup }: SignInUIProps) {
             </div>
             <p>
               Don&apos;t have an account?{' '}
-              <a
+              <span
                 onClick={() => {
                   setEmailState('create');
                   setError(null);
@@ -175,7 +190,7 @@ export function SignInUI({ auth, methods, popup }: SignInUIProps) {
                 style={linkStyle}
               >
                 Create one
-              </a>
+              </span>
             </p>
           </div>
         );
@@ -220,7 +235,7 @@ export function SignInUI({ auth, methods, popup }: SignInUIProps) {
                     return;
                   }
                   setLoading(true);
-                  createUserWithEmailAndPassword(auth, email, password)
+                  createUserWithEmailAndPassword(authInstance, email, password)
                     .catch((err) => {
                       setError(err.message);
                     })
@@ -246,7 +261,7 @@ export function SignInUI({ auth, methods, popup }: SignInUIProps) {
             </div>
             <p>
               Have an account already?{' '}
-              <a
+              <span
                 onClick={() => {
                   setEmailState('signin');
                   setError(null);
@@ -254,7 +269,7 @@ export function SignInUI({ auth, methods, popup }: SignInUIProps) {
                 style={linkStyle}
               >
                 Sign in
-              </a>
+              </span>
             </p>
           </div>
         );

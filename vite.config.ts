@@ -14,7 +14,6 @@ export default defineConfig({
     dts({ rollupTypes: true }), // Output .d.ts files
   ],
   build: {
-    target: 'esnext',
     minify: false,
     lib: {
       entry: resolve(__dirname, join('lib', 'index.ts')),
@@ -23,8 +22,14 @@ export default defineConfig({
       formats: ['es', 'cjs'],
     },
     rollupOptions: {
-      // Exclude peer dependencies from the bundle to reduce bundle size
-      external: ['react/jsx-runtime', ...Object.keys(peerDependencies)],
+      // Exclude peer dependencies from the bundle to reduce bundle size AND to
+      // avoid duplicating Firebase's global state, which breaks everything
+      external: [
+        'react/jsx-runtime',
+        ...Object.keys(peerDependencies),
+        /^@firebase\//,
+        /^firebase\//,
+      ],
     },
   },
   test: {

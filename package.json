@@ -1,8 +1,7 @@
 {
   "name": "@adelespinasse/react-firebase-login",
-  "private": true,
   "version": "0.0.1",
-  "description": "test react lib",
+  "description": "React components for Firebase authentication",
   "author": "adelespinasse",
   "license": "private",
   "type": "module",
