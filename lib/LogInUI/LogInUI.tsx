@@ -9,6 +9,7 @@ import {
   signInWithPopup,
   signInWithRedirect,
 } from 'firebase/auth';
+import { type FirebaseError } from 'firebase/app';
 import { GoogleLoginButton, createButton } from 'react-social-login-buttons';
 
 const EmailLoginButton = createButton({
@@ -84,6 +85,17 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
   const [loading, setLoading] = useState(false);
   const authInstance = auth || getAuth();
 
+  // Converts a FirebaseError to a relatively human-friendly string (the
+  // err.message is not very human-friendly).
+  const setFirebaseError = useCallback((error: FirebaseError) => {
+    const suffix = error.code?.split('/').splice(-1)[0];
+    if (!suffix) {
+      setError(error.message);
+      return;
+    }
+    setError(suffix.replace('-', ' '));
+  }, []);
+
   const signIn = useCallback(
     async (provider: AuthProvider) => {
       try {
@@ -93,12 +105,12 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
           await signInWithRedirect(authInstance, provider);
         }
       } catch (err) {
-        setError((err as Error).message);
+        setFirebaseError(err as FirebaseError);
       } finally {
         setLoading(false);
       }
     },
-    [authInstance, popup],
+    [authInstance, popup, setFirebaseError],
   );
 
   const methodMap = {
@@ -129,7 +141,19 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
         return (methods || ['google']).map((method) => methodMap[method]);
       case 'signin':
         return (
-          <div>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              setLoading(true);
+              signInWithEmailAndPassword(authInstance, email, password)
+                .catch((err: FirebaseError) => {
+                  setFirebaseError(err);
+                })
+                .finally(() => {
+                  setLoading(false);
+                });
+            }}
+          >
             <input
               type="email"
               value={email}
@@ -152,16 +176,7 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
             />
             <div style={buttonContainerStyle}>
               <button
-                onClick={() => {
-                  setLoading(true);
-                  signInWithEmailAndPassword(authInstance, email, password)
-                    .catch((err) => {
-                      setError(err.message);
-                    })
-                    .finally(() => {
-                      setLoading(false);
-                    });
-                }}
+                type="submit"
                 disabled={signinButtonDisabled}
                 style={signinButtonDisabled ? disabledButtonStyle : buttonStyle}
               >
@@ -190,11 +205,27 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
                 Create one
               </span>
             </p>
-          </div>
+          </form>
         );
       case 'create':
         return (
-          <div>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (password !== confirmPassword) {
+                setError('Passwords do not match');
+                return;
+              }
+              setLoading(true);
+              createUserWithEmailAndPassword(authInstance, email, password)
+                .catch((err: FirebaseError) => {
+                  setFirebaseError(err);
+                })
+                .finally(() => {
+                  setLoading(false);
+                });
+            }}
+        >
             <input
               type="email"
               value={email}
@@ -227,20 +258,7 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
             />
             <div style={buttonContainerStyle}>
               <button
-                onClick={() => {
-                  if (password !== confirmPassword) {
-                    setError('Passwords do not match');
-                    return;
-                  }
-                  setLoading(true);
-                  createUserWithEmailAndPassword(authInstance, email, password)
-                    .catch((err) => {
-                      setError(err.message);
-                    })
-                    .finally(() => {
-                      setLoading(false);
-                    });
-                }}
+                type="submit"
                 disabled={createButtonDisabled}
                 style={createButtonDisabled ? disabledButtonStyle : buttonStyle}
               >
@@ -269,15 +287,18 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
                 Sign in
               </span>
             </p>
-          </div>
+          </form>
         );
     }
   };
 
   return (
-    <div style={containerStyle} className="react-firebase-login-ui-container">
+    <div
+      style={containerStyle}
+      className="react-firebase-login-ui-container"
+    >
       {inner()}
-      {error && <div style={{ color: 'red' }}>{error}</div>}
+      {error && <div style={{ color: 'red' }}>Error: {error}</div>}
     </div>
   );
 }
