@@ -12,7 +12,7 @@ import {
 import { GoogleLoginButton, createButton } from 'react-social-login-buttons';
 
 const EmailLoginButton = createButton({
-  text: 'Log in with Email',
+  text: 'Sign in with Email',
   icon: () => '📧',
   style: {
     backgroundColor: '#fff',
@@ -106,7 +106,9 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
       <GoogleLoginButton
         onClick={() => signIn(new GoogleAuthProvider())}
         key="google"
-      />
+      >
+        Sign in with Google
+      </GoogleLoginButton>
     ),
     email: (
       <EmailLoginButton
