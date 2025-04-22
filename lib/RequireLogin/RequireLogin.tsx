@@ -12,11 +12,12 @@ export function RequireLogin({ auth, loginComponent, children }: RequireLoginPro
   const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
-    console.log('Initializing auth state listener');
     const unsubscribe = onAuthStateChanged(authInstance, (user) => {
       if (user) {
+        console.log('Signed in as', user.email);
         setLoggedIn(true);
       } else {
+        console.log('Not signed in');
         setLoggedIn(false);
       }
       setInitialized(true);

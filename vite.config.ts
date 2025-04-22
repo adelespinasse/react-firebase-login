@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 
-import { peerDependencies } from './package.json';
+import { dependencies, peerDependencies } from './package.json';
 
 export default defineConfig({
   plugins: [
@@ -26,6 +26,7 @@ export default defineConfig({
       // avoid duplicating Firebase's global state, which breaks everything
       external: [
         'react/jsx-runtime',
+        ...Object.keys(dependencies),
         ...Object.keys(peerDependencies),
         /^@firebase\//,
         /^firebase\//,

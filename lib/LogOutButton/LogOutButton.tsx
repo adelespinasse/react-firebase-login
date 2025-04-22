@@ -23,7 +23,7 @@ export function LogOutButton({ auth, onLogOut, ...rest }: LogOutButtonProps) {
       onClick={onClick}
       {...rest}
     >
-      Log Out
+      Sign Out
     </button>
   );
 }
