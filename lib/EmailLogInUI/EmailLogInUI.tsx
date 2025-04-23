@@ -1,30 +1,18 @@
 import { useCallback, useState } from 'react';
 import {
   type Auth,
-  type AuthProvider,
   getAuth,
-  GoogleAuthProvider,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInWithPopup,
-  signInWithRedirect,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { type FirebaseError } from 'firebase/app';
-import { GoogleLoginButton, createButton } from 'react-social-login-buttons';
-
-const EmailLoginButton = createButton({
-  text: 'Sign in with Email',
-  icon: () => '📧',
-  style: {
-    backgroundColor: '#fff',
-    color: '#000',
-  },
-});
 
 const containerStyle = {
   display: 'flex',
   'flex-direction': 'column',
-  maxWidth: '20em',
+  maxWidth: '35em',
+  minWidth: '25em',
   backgroundColor: '#fff',
   color: '#000',
   padding: '1em',
@@ -70,12 +58,11 @@ const linkStyle = {
 
 export type LogInUIProps = {
   auth?: Auth;
-  methods?: LogInMethod[];
-  popup?: boolean;
+  onClose: () => void;
 };
 
-export function EmailLogInUI({ auth, methods, popup }: LogInUIProps) {
-  const [emailState, setEmailState] = useState<'none' | 'signin' | 'create'>('none');
+export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
+  const [loginState, setLoginState] = useState<'signin' | 'create' | 'forgot' | 'sent'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -94,49 +81,14 @@ export function EmailLogInUI({ auth, methods, popup }: LogInUIProps) {
     setError(suffix.replace('-', ' '));
   }, []);
 
-  const signIn = useCallback(
-    async (provider: AuthProvider) => {
-      try {
-        if (popup) {
-          await signInWithPopup(authInstance, provider);
-        } else {
-          await signInWithRedirect(authInstance, provider);
-        }
-      } catch (err) {
-        setFirebaseError(err as FirebaseError);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [authInstance, popup, setFirebaseError],
-  );
-
-  const methodMap = {
-    google: (
-      <GoogleLoginButton
-        onClick={() => signIn(new GoogleAuthProvider())}
-        key="google"
-      >
-        Sign in with Google
-      </GoogleLoginButton>
-    ),
-    email: (
-      <EmailLoginButton
-        onClick={() => setEmailState('signin')}
-        key="email"
-      />
-    ),
-  };
-
   const inner = () => {
     // if (loading) {
     //   return <div>Loading...</div>;
     // }
     const signinButtonDisabled = loading || !email || !password;
     const createButtonDisabled = loading || !email || !password || !confirmPassword;
-    switch (emailState) {
-      case 'none':
-        return (methods || ['google']).map((method) => methodMap[method]);
+    const forgotButtonDisabled = loading || !email;
+    switch (loginState) {
       case 'signin':
         return (
           <form
@@ -181,10 +133,7 @@ export function EmailLogInUI({ auth, methods, popup }: LogInUIProps) {
                 Sign In
               </button>
               <button
-                onClick={() => {
-                  setEmailState('none');
-                  setError(null);
-                }}
+                onClick={onClose}
                 disabled={loading}
                 style={loading ? disabledButtonStyle : buttonStyle}
               >
@@ -195,12 +144,23 @@ export function EmailLogInUI({ auth, methods, popup }: LogInUIProps) {
               Don&apos;t have an account?{' '}
               <span
                 onClick={() => {
-                  setEmailState('create');
+                  setLoginState('create');
                   setError(null);
                 }}
                 style={linkStyle}
               >
                 Create one
+              </span>
+            </p>
+            <p>
+              <span
+                onClick={() => {
+                  setLoginState('forgot');
+                  setError(null);
+                }}
+                style={linkStyle}
+              >
+                Forgot password?
               </span>
             </p>
           </form>
@@ -263,10 +223,7 @@ export function EmailLogInUI({ auth, methods, popup }: LogInUIProps) {
                 Create Account
               </button>
               <button
-                onClick={() => {
-                  setEmailState('none');
-                  setError(null);
-                }}
+                onClick={onClose}
                 disabled={loading}
                 style={loading ? disabledButtonStyle : buttonStyle}
               >
@@ -277,7 +234,7 @@ export function EmailLogInUI({ auth, methods, popup }: LogInUIProps) {
               Have an account already?{' '}
               <span
                 onClick={() => {
-                  setEmailState('signin');
+                  setLoginState('signin');
                   setError(null);
                 }}
                 style={linkStyle}
@@ -286,6 +243,78 @@ export function EmailLogInUI({ auth, methods, popup }: LogInUIProps) {
               </span>
             </p>
           </form>
+        );
+      case 'forgot':
+        return (
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              setLoading(true);
+              sendPasswordResetEmail(authInstance, email)
+                .then(() => {
+                  setLoginState('sent');
+                })
+                .catch((err: FirebaseError) => {
+                  setFirebaseError(err);
+                })
+                .finally(() => {
+                  setLoading(false);
+                });
+            }}
+          >
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError(null);
+              }}
+              placeholder="Email"
+              style={inputStyle}
+            />
+            <div style={buttonContainerStyle}>
+              <button
+                type="submit"
+                disabled={forgotButtonDisabled}
+                style={forgotButtonDisabled ? disabledButtonStyle : buttonStyle}
+              >
+                Send Reset Email
+              </button>
+              <button
+                onClick={() => setLoginState('signin')}
+                disabled={loading}
+                style={loading ? disabledButtonStyle : buttonStyle}
+              >
+                Back
+              </button>
+              <button
+                onClick={onClose}
+                disabled={loading}
+                style={loading ? disabledButtonStyle : buttonStyle}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        );
+      case 'sent':
+        return (
+          <div>
+            <p>
+              A password reset email has been sent. If no email
+              arrives, that probably means there is no account
+              with that address (but check your spam folder).
+            </p>
+            <div style={buttonContainerStyle}>
+              <button
+                onClick={onClose}
+                disabled={loading}
+                style={loading ? disabledButtonStyle : buttonStyle}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         );
     }
   };

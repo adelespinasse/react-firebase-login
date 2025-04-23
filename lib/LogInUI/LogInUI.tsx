@@ -4,13 +4,13 @@ import {
   type AuthProvider,
   getAuth,
   GoogleAuthProvider,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
 } from 'firebase/auth';
 import { type FirebaseError } from 'firebase/app';
 import { GoogleLoginButton, createButton } from 'react-social-login-buttons';
+
+import { EmailLogInUI } from '../EmailLogInUI';
 
 const EmailLoginButton = createButton({
   text: 'Sign in with Email',
@@ -30,44 +30,6 @@ const containerStyle = {
   padding: '1em',
 };
 
-const buttonContainerStyle = {
-  display: 'flex',
-  'flex-direction': 'row',
-  justifyContent: 'start',
-  marginBottom: '0.5em',
-  width: '100%',
-  gap: '0.5em',
-};
-
-const buttonStyle = {
-  backgroundColor: '#4275a4',
-  color: '#fff',
-  borderRadius: '0.2em',
-  padding: '0.2em 1em',
-  border: 'none',
-  cursor: 'pointer',
-};
-
-const disabledButtonStyle = {
-  ...buttonStyle,
-  opacity: 0.5,
-  cursor: 'not-allowed',
-};
-
-const inputStyle = {
-  border: '1px solid #ccc',
-  borderRadius: '0.2em',
-  padding: '0.5em',
-  marginBottom: '0.5em',
-  width: '100%',
-};
-
-const linkStyle = {
-  color: '#4275a4',
-  textDecoration: 'underline',
-  cursor: 'pointer',
-};
-
 export type LogInMethod = 'google' | 'email';
 
 export type LogInUIProps = {
@@ -77,10 +39,7 @@ export type LogInUIProps = {
 };
 
 export function LogInUI({ auth, methods, popup }: LogInUIProps) {
-  const [emailState, setEmailState] = useState<'none' | 'signin' | 'create'>('none');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [page, setPage] = useState<'home' | 'email'>('home');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const authInstance = auth || getAuth();
@@ -98,6 +57,7 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
 
   const signIn = useCallback(
     async (provider: AuthProvider) => {
+      setLoading(true);
       try {
         if (popup) {
           await signInWithPopup(authInstance, provider);
@@ -117,6 +77,7 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
     google: (
       <GoogleLoginButton
         onClick={() => signIn(new GoogleAuthProvider())}
+        disabled={loading}
         key="google"
       >
         Sign in with Google
@@ -124,7 +85,8 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
     ),
     email: (
       <EmailLoginButton
-        onClick={() => setEmailState('signin')}
+        onClick={() => setPage('email')}
+        disabled={loading}
         key="email"
       />
     ),
@@ -134,161 +96,14 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
     // if (loading) {
     //   return <div>Loading...</div>;
     // }
-    const signinButtonDisabled = loading || !email || !password;
-    const createButtonDisabled = loading || !email || !password || !confirmPassword;
-    switch (emailState) {
-      case 'none':
+    switch (page) {
+      case 'home':
         return (methods || ['google']).map((method) => methodMap[method]);
-      case 'signin':
-        return (
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              setLoading(true);
-              signInWithEmailAndPassword(authInstance, email, password)
-                .catch((err: FirebaseError) => {
-                  setFirebaseError(err);
-                })
-                .finally(() => {
-                  setLoading(false);
-                });
-            }}
-          >
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setError(null);
-              }}
-              placeholder="Email"
-              style={inputStyle}
-            />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError(null);
-              }}
-              placeholder="Password"
-              style={inputStyle}
-            />
-            <div style={buttonContainerStyle}>
-              <button
-                type="submit"
-                disabled={signinButtonDisabled}
-                style={signinButtonDisabled ? disabledButtonStyle : buttonStyle}
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => {
-                  setEmailState('none');
-                  setError(null);
-                }}
-                disabled={loading}
-                style={loading ? disabledButtonStyle : buttonStyle}
-              >
-                Cancel
-              </button>
-            </div>
-            <p>
-              Don&apos;t have an account?{' '}
-              <span
-                onClick={() => {
-                  setEmailState('create');
-                  setError(null);
-                }}
-                style={linkStyle}
-              >
-                Create one
-              </span>
-            </p>
-          </form>
-        );
-      case 'create':
-        return (
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (password !== confirmPassword) {
-                setError('Passwords do not match');
-                return;
-              }
-              setLoading(true);
-              createUserWithEmailAndPassword(authInstance, email, password)
-                .catch((err: FirebaseError) => {
-                  setFirebaseError(err);
-                })
-                .finally(() => {
-                  setLoading(false);
-                });
-            }}
-        >
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setError(null);
-              }}
-              placeholder="Email"
-              style={inputStyle}
-            />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError(null);
-              }}
-              placeholder="Password"
-              style={inputStyle}
-            />
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                setError(null);
-              }}
-              placeholder="Confirm Password"
-              style={inputStyle}
-            />
-            <div style={buttonContainerStyle}>
-              <button
-                type="submit"
-                disabled={createButtonDisabled}
-                style={createButtonDisabled ? disabledButtonStyle : buttonStyle}
-              >
-                Create Account
-              </button>
-              <button
-                onClick={() => {
-                  setEmailState('none');
-                  setError(null);
-                }}
-                disabled={loading}
-                style={loading ? disabledButtonStyle : buttonStyle}
-              >
-                Cancel
-              </button>
-            </div>
-            <p>
-              Have an account already?{' '}
-              <span
-                onClick={() => {
-                  setEmailState('signin');
-                  setError(null);
-                }}
-                style={linkStyle}
-              >
-                Sign in
-              </span>
-            </p>
-          </form>
-        );
+      case 'email':
+        return <EmailLogInUI
+          auth={authInstance}
+          onClose={() => setPage('home')}
+        />;
     }
   };
 
