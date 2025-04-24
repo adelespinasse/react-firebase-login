@@ -8,15 +8,7 @@ import {
 } from 'firebase/auth';
 import { type FirebaseError } from 'firebase/app';
 
-const containerStyle = {
-  display: 'flex',
-  'flex-direction': 'column',
-  maxWidth: '35em',
-  minWidth: '25em',
-  backgroundColor: '#fff',
-  color: '#000',
-  padding: '1em',
-};
+import { containerStyle } from '../LogInUI/containerStyle';
 
 const buttonContainerStyle = {
   display: 'flex',
@@ -27,33 +19,10 @@ const buttonContainerStyle = {
   gap: '0.5em',
 };
 
-const buttonStyle = {
-  backgroundColor: '#4275a4',
-  color: '#fff',
-  borderRadius: '0.2em',
-  padding: '0.2em 1em',
-  border: 'none',
-  cursor: 'pointer',
-};
-
-const disabledButtonStyle = {
-  ...buttonStyle,
-  opacity: 0.5,
-  cursor: 'not-allowed',
-};
-
 const inputStyle = {
-  border: '1px solid #ccc',
-  borderRadius: '0.2em',
   padding: '0.5em',
   marginBottom: '0.5em',
   width: '100%',
-};
-
-const linkStyle = {
-  color: '#4275a4',
-  textDecoration: 'underline',
-  cursor: 'pointer',
 };
 
 export type LogInUIProps = {
@@ -128,40 +97,36 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
               <button
                 type="submit"
                 disabled={signinButtonDisabled}
-                style={signinButtonDisabled ? disabledButtonStyle : buttonStyle}
               >
                 Sign In
               </button>
               <button
                 onClick={onClose}
                 disabled={loading}
-                style={loading ? disabledButtonStyle : buttonStyle}
               >
                 Cancel
               </button>
             </div>
             <p>
               Don&apos;t have an account?{' '}
-              <span
+              <a
                 onClick={() => {
                   setLoginState('create');
                   setError(null);
                 }}
-                style={linkStyle}
               >
                 Create one
-              </span>
+              </a>
             </p>
             <p>
-              <span
+              <a
                 onClick={() => {
                   setLoginState('forgot');
                   setError(null);
                 }}
-                style={linkStyle}
               >
                 Forgot password?
-              </span>
+              </a>
             </p>
           </form>
         );
@@ -176,6 +141,13 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
               }
               setLoading(true);
               createUserWithEmailAndPassword(authInstance, email, password)
+                .then((userCredential) => {
+                  // Janky way to signal to RequireLogin component that this is a new user
+                  window.localStorage.setItem(
+                    `react-firebase-login-newuser-${userCredential.user.uid}`,
+                    'true',
+                  );
+                })
                 .catch((err: FirebaseError) => {
                   setFirebaseError(err);
                 })
@@ -218,29 +190,26 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
               <button
                 type="submit"
                 disabled={createButtonDisabled}
-                style={createButtonDisabled ? disabledButtonStyle : buttonStyle}
               >
                 Create Account
               </button>
               <button
                 onClick={onClose}
                 disabled={loading}
-                style={loading ? disabledButtonStyle : buttonStyle}
               >
                 Cancel
               </button>
             </div>
             <p>
               Have an account already?{' '}
-              <span
+              <a
                 onClick={() => {
                   setLoginState('signin');
                   setError(null);
                 }}
-                style={linkStyle}
               >
                 Sign in
-              </span>
+              </a>
             </p>
           </form>
         );
@@ -276,23 +245,14 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
               <button
                 type="submit"
                 disabled={forgotButtonDisabled}
-                style={forgotButtonDisabled ? disabledButtonStyle : buttonStyle}
               >
                 Send Reset Email
               </button>
               <button
                 onClick={() => setLoginState('signin')}
                 disabled={loading}
-                style={loading ? disabledButtonStyle : buttonStyle}
               >
                 Back
-              </button>
-              <button
-                onClick={onClose}
-                disabled={loading}
-                style={loading ? disabledButtonStyle : buttonStyle}
-              >
-                Cancel
               </button>
             </div>
           </form>
@@ -307,11 +267,10 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
             </p>
             <div style={buttonContainerStyle}>
               <button
-                onClick={onClose}
+                onClick={() => setLoginState('signin')}
                 disabled={loading}
-                style={loading ? disabledButtonStyle : buttonStyle}
               >
-                Cancel
+                Back
               </button>
             </div>
           </div>

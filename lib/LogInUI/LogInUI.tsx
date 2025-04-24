@@ -11,6 +11,7 @@ import { type FirebaseError } from 'firebase/app';
 import { GoogleLoginButton, createButton } from 'react-social-login-buttons';
 
 import { EmailLogInUI } from '../EmailLogInUI';
+import { containerStyle } from './containerStyle';
 
 const EmailLoginButton = createButton({
   text: 'Sign in with Email',
@@ -20,15 +21,6 @@ const EmailLoginButton = createButton({
     color: '#000',
   },
 });
-
-const containerStyle = {
-  display: 'flex',
-  'flex-direction': 'column',
-  maxWidth: '20em',
-  backgroundColor: '#fff',
-  color: '#000',
-  padding: '1em',
-};
 
 export type LogInMethod = 'google' | 'email';
 
@@ -92,27 +84,19 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
     ),
   };
 
-  const inner = () => {
-    // if (loading) {
-    //   return <div>Loading...</div>;
-    // }
-    switch (page) {
-      case 'home':
-        return (methods || ['google']).map((method) => methodMap[method]);
-      case 'email':
-        return <EmailLogInUI
-          auth={authInstance}
-          onClose={() => setPage('home')}
-        />;
-    }
-  };
+  if (page === 'email') {
+    return <EmailLogInUI
+      auth={authInstance}
+      onClose={() => setPage('home')}
+    />;
+  }
 
   return (
     <div
       style={containerStyle}
       className="react-firebase-login-ui-container"
     >
-      {inner()}
+      {(methods || ['google']).map((method) => methodMap[method])}
       {error && <div style={{ color: 'red' }}>Error: {error}</div>}
     </div>
   );

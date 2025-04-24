@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 import { LogOutButton, SimpleLogInPage } from '../../lib';
+import './main.css';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCnT91mQqEiQW6yS2lAbbezpnUX8pzk_no",
@@ -26,6 +27,7 @@ function App() {
   return (
     <SimpleLogInPage
       methods={['email', 'google']}
+      requireVerification
       popup
       header={<h1>Demo App</h1>}
     >
