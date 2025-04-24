@@ -14,7 +14,7 @@ initializeApp(firebaseConfig);
 
 function InnerContent() {
   return (
-    <div>
+    <div className="inner-content">
       <p>
         Logged in as { getAuth().currentUser?.email }
       </p>

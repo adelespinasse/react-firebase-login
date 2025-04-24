@@ -5,12 +5,13 @@ import {
   onAuthStateChanged,
   onIdTokenChanged,
   getAuth,
-  getIdToken,
+  reload,
   sendEmailVerification,
 } from 'firebase/auth';
 import { type FirebaseError } from 'firebase/app';
 
 import { LogOutButton } from '../LogOutButton/LogOutButton';
+import { formatFirebaseError } from '../shared';
 
 export type RequireLoginProps = PropsWithChildren<{
   auth?: Auth;
@@ -43,46 +44,47 @@ export function RequireLogin({
       await sendEmailVerification(user);
     } catch(err) {
       console.error('Error sending verification email:', err);
-      setError((err as FirebaseError).message);
+      setError(formatFirebaseError(err as FirebaseError));
     } finally {
       setSending(false);
     }
   }, [user]);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(authInstance, async (user) => {
-      if (user) {
-        console.log('Signed in as', user.email, user.uid);
-        console.log('Last signed in:', user.metadata.lastSignInTime);
-        setUser(user);
-        if (requireVerification && !user.emailVerified) {
-          console.log('Email not verified');
-          // Janky way to find out from EmailLogInUI component that this is a new user
-          const storageKey = `react-firebase-login-newuser-${user.uid}`;
-          const isNew = window.localStorage.getItem(storageKey);
-          if (isNew) {
-            window.localStorage.removeItem(storageKey);
-            await sendVerification();
-          }
-        } else {
-          setVerified(true);
+  const authStateHandler = useCallback(async (user: User | null) => {
+    if (user) {
+      console.log('Signed in as', user.email, user.uid);
+      console.log('Last signed in:', user.metadata.lastSignInTime);
+      setUser(user);
+      if (requireVerification && !user.emailVerified) {
+        console.log('Email not verified');
+        // Janky way to find out from EmailLogInUI component that this is a new user
+        const storageKey = `react-firebase-login-newuser-${user.uid}`;
+        const isNew = window.localStorage.getItem(storageKey);
+        if (isNew) {
+          window.localStorage.removeItem(storageKey);
+          await sendVerification();
         }
       } else {
-        console.log('Not signed in');
-        setUser(null);
-        setVerified(false);
+        setVerified(true);
       }
-      setInitialized(true);
-    });
-    return unsubscribe;
-  }, [authInstance, requireVerification, sendVerification]);
+    } else {
+      console.log('Not signed in');
+      setUser(null);
+      setVerified(false);
+    }
+    setInitialized(true);
+  }, [requireVerification, sendVerification]);
 
-  useEffect(() => {
-    const unsubscribe = onIdTokenChanged(authInstance, async (user) => {
-      console.log('onIdTokenChanged', user);
-    });
-    return unsubscribe;
-  }, [authInstance]);
+  useEffect(
+    () => onAuthStateChanged(authInstance, authStateHandler),
+    [authInstance, authStateHandler],
+  );
+
+  // onAuthStateChanged isn't triggered by token refreshes, so handle those too.
+  useEffect(
+    () => onIdTokenChanged(authInstance, authStateHandler),
+    [authInstance, authStateHandler],
+  );
 
   if (!initialized) {
     return null;
@@ -103,7 +105,7 @@ export function RequireLogin({
         <p>
           A verification link has been sent to {user.email}. Click the provided link,
           then{' '}
-          <a onClick={() => getIdToken(user, true)}>
+          <a onClick={() => reload(user)}>
             click here.
           </a>
         </p>

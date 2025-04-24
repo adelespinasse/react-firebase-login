@@ -1,5 +1,4 @@
 import type { Preview } from '@storybook/react';
-import '../lib/global.css';
 import { initializeApp } from 'firebase/app';
 
 initializeApp({

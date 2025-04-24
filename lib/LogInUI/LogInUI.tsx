@@ -11,7 +11,7 @@ import { type FirebaseError } from 'firebase/app';
 import { GoogleLoginButton, createButton } from 'react-social-login-buttons';
 
 import { EmailLogInUI } from '../EmailLogInUI';
-import { containerStyle } from './containerStyle';
+import { containerStyle, formatFirebaseError } from '../shared';
 
 const EmailLoginButton = createButton({
   text: 'Sign in with Email',
@@ -39,12 +39,7 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
   // Converts a FirebaseError to a relatively human-friendly string (the
   // err.message is not very human-friendly).
   const setFirebaseError = useCallback((error: FirebaseError) => {
-    const suffix = error.code?.split('/').splice(-1)[0];
-    if (!suffix) {
-      setError(error.message);
-      return;
-    }
-    setError(suffix.replace('-', ' '));
+    setError(formatFirebaseError(error));
   }, []);
 
   const signIn = useCallback(
