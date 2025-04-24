@@ -33,7 +33,6 @@ export function RequireLogin({
   const [user, setUser] = useState<User | null>(null);
 
   const sendVerification = useCallback(async () => {
-    console.log('Sending verification email');
     if (!user) {
       setError('Something is broken');
       return;
@@ -52,11 +51,9 @@ export function RequireLogin({
 
   const authStateHandler = useCallback(async (user: User | null) => {
     if (user) {
-      console.log('Signed in as', user.email, user.uid);
-      console.log('Last signed in:', user.metadata.lastSignInTime);
+      // console.log('Signed in as', user.email, user.uid);
       setUser(user);
       if (requireVerification && !user.emailVerified) {
-        console.log('Email not verified');
         // Janky way to find out from EmailLogInUI component that this is a new user
         const storageKey = `react-firebase-login-newuser-${user.uid}`;
         const isNew = window.localStorage.getItem(storageKey);
@@ -68,7 +65,6 @@ export function RequireLogin({
         setVerified(true);
       }
     } else {
-      console.log('Not signed in');
       setUser(null);
       setVerified(false);
     }

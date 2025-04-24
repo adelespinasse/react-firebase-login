@@ -46,9 +46,6 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
   }, []);
 
   const inner = () => {
-    // if (loading) {
-    //   return <div>Loading...</div>;
-    // }
     const signinButtonDisabled = loading || !email || !password;
     const createButtonDisabled = loading || !email || !password || !confirmPassword;
     const forgotButtonDisabled = loading || !email;
@@ -77,6 +74,7 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
               }}
               placeholder="Email"
               style={inputStyle}
+              disabled={loading}
             />
             <input
               type="password"
@@ -87,6 +85,7 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
               }}
               placeholder="Password"
               style={inputStyle}
+              disabled={loading}
             />
             <div style={buttonContainerStyle}>
               <button
@@ -150,7 +149,7 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
                   setLoading(false);
                 });
             }}
-        >
+          >
             <input
               type="email"
               value={email}
@@ -160,6 +159,7 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
               }}
               placeholder="Email"
               style={inputStyle}
+              disabled={loading}
             />
             <input
               type="password"
@@ -170,6 +170,7 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
               }}
               placeholder="Password"
               style={inputStyle}
+              disabled={loading}
             />
             <input
               type="password"
@@ -180,6 +181,7 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
               }}
               placeholder="Confirm Password"
               style={inputStyle}
+              disabled={loading}
             />
             <div style={buttonContainerStyle}>
               <button
@@ -235,6 +237,7 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
               }}
               placeholder="Email"
               style={inputStyle}
+              disabled={loading}
             />
             <div style={buttonContainerStyle}>
               <button
