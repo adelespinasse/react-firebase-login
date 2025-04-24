@@ -1,9 +1,15 @@
 {
   "name": "@adelespinasse/react-firebase-login",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "React components for Firebase authentication",
-  "author": "adelespinasse",
-  "license": "private",
+  "keywords": ["react", "firebase", "authentication", "login", "signin", "signup"],
+  "homepage": "https://github.com/adelespinasse/react-firebase-login",
+  "bugs": "https://github.com/adelespinasse/react-firebase-login/issues",
+  "author": {
+    "name": "Alan deLespinasse",
+    "url": "https://aldel.com"
+  },
+  "license": "UNLICENSED",
   "type": "module",
   "files": [
     "dist"
@@ -24,8 +30,7 @@
         "types": "./dist/index.d.ts",
         "default": "./dist/index.cjs"
       }
-    },
-    "./style.css": "./dist/style.css"
+    }
   },
   "scripts": {
     "dev": "storybook dev -p 6006",
