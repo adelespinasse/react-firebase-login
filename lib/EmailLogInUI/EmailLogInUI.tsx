@@ -8,7 +8,7 @@ import {
 } from 'firebase/auth';
 import { type FirebaseError } from 'firebase/app';
 
-import { containerStyle, formatFirebaseError } from '../shared';
+import { containerStyle, formatFirebaseError, setIsNewUser } from '../shared';
 
 const buttonContainerStyle = {
   display: 'flex',
@@ -136,11 +136,7 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
               setLoading(true);
               createUserWithEmailAndPassword(authInstance, email, password)
                 .then((userCredential) => {
-                  // Janky way to signal to RequireLogin component that this is a new user
-                  window.localStorage.setItem(
-                    `react-firebase-login-newuser-${userCredential.user.uid}`,
-                    'true',
-                  );
+                  setIsNewUser(userCredential);
                 })
                 .catch((err: FirebaseError) => {
                   setFirebaseError(err);

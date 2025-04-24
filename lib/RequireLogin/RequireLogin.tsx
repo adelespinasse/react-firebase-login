@@ -11,7 +11,7 @@ import {
 import { type FirebaseError } from 'firebase/app';
 
 import { LogOutButton } from '../LogOutButton/LogOutButton';
-import { formatFirebaseError } from '../shared';
+import { formatFirebaseError, isNewUser } from '../shared';
 
 export type RequireLoginProps = PropsWithChildren<{
   auth?: Auth;
@@ -51,14 +51,10 @@ export function RequireLogin({
 
   const authStateHandler = useCallback(async (user: User | null) => {
     if (user) {
-      // console.log('Signed in as', user.email, user.uid);
+      // console.log('Signed in as', user);
       setUser(user);
       if (requireVerification && !user.emailVerified) {
-        // Janky way to find out from EmailLogInUI component that this is a new user
-        const storageKey = `react-firebase-login-newuser-${user.uid}`;
-        const isNew = window.localStorage.getItem(storageKey);
-        if (isNew) {
-          window.localStorage.removeItem(storageKey);
+        if (isNewUser(user)) {
           await sendVerification();
         }
       } else {

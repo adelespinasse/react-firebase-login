@@ -1,17 +1,22 @@
 import { useCallback, useState } from 'react';
 import {
-  type Auth,
-  type AuthProvider,
+  FacebookAuthProvider,
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
+  type Auth,
+  type AuthProvider,
 } from 'firebase/auth';
 import { type FirebaseError } from 'firebase/app';
-import { GoogleLoginButton, createButton } from 'react-social-login-buttons';
+import {
+  createButton,
+  FacebookLoginButton,
+  GoogleLoginButton,
+} from 'react-social-login-buttons';
 
 import { EmailLogInUI } from '../EmailLogInUI';
-import { containerStyle, formatFirebaseError } from '../shared';
+import { containerStyle, formatFirebaseError, setIsNewUser } from '../shared';
 
 const EmailLoginButton = createButton({
   text: 'Sign in with Email',
@@ -22,7 +27,7 @@ const EmailLoginButton = createButton({
   },
 });
 
-export type LogInMethod = 'google' | 'email';
+export type LogInMethod = 'google' | 'facebook' | 'email';
 
 export type LogInUIProps = {
   auth?: Auth;
@@ -47,9 +52,15 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
       setLoading(true);
       try {
         if (popup) {
-          await signInWithPopup(authInstance, provider);
+          await signInWithPopup(authInstance, provider)
+            .then((userCredential) => {
+              setIsNewUser(userCredential);
+            });
         } else {
-          await signInWithRedirect(authInstance, provider);
+          await signInWithRedirect(authInstance, provider)
+            .then((userCredential) => {
+              setIsNewUser(userCredential);
+            });
         }
       } catch (err) {
         setFirebaseError(err as FirebaseError);
@@ -69,6 +80,15 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
       >
         Sign in with Google
       </GoogleLoginButton>
+    ),
+    facebook: (
+      <FacebookLoginButton
+        onClick={() => signIn(new FacebookAuthProvider())}
+        disabled={loading}
+        key="facebook"
+      >
+        Sign in with Facebook
+      </FacebookLoginButton>
     ),
     email: (
       <EmailLoginButton
