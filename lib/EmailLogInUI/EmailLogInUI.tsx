@@ -67,6 +67,8 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
           >
             <input
               type="email"
+              autoFocus
+              key="email-input-signin"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -148,6 +150,8 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
           >
             <input
               type="email"
+              autoFocus
+              key="email-input-create"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -226,6 +230,8 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
           >
             <input
               type="email"
+              autoFocus
+              key="email-input-forgot"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
