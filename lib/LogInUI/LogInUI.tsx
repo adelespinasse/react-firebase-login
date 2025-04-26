@@ -2,17 +2,25 @@ import { useCallback, useState } from 'react';
 import {
   FacebookAuthProvider,
   getAuth,
+  GithubAuthProvider,
   GoogleAuthProvider,
+  OAuthProvider,
   signInWithPopup,
   signInWithRedirect,
+  TwitterAuthProvider,
   type Auth,
   type AuthProvider,
 } from 'firebase/auth';
 import { type FirebaseError } from 'firebase/app';
 import {
+  AppleLoginButton,
   createButton,
   FacebookLoginButton,
+  GithubLoginButton,
   GoogleLoginButton,
+  MicrosoftLoginButton,
+  XLoginButton,
+  YahooLoginButton,
 } from 'react-social-login-buttons';
 
 import { EmailLogInUI } from '../EmailLogInUI';
@@ -27,7 +35,8 @@ const EmailLoginButton = createButton({
   },
 });
 
-export type LogInMethod = 'google' | 'facebook' | 'email';
+export type LogInMethod = 'apple' | 'facebook' | 'github' | 'google'
+  | 'microsoft' | 'twitter' | 'yahoo' | 'email';
 
 export type LogInUIProps = {
   auth?: Auth;
@@ -72,14 +81,14 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
   );
 
   const methodMap = {
-    google: (
-      <GoogleLoginButton
-        onClick={() => signIn(new GoogleAuthProvider())}
+    apple: (
+      <AppleLoginButton
+        onClick={() => signIn(new OAuthProvider('apple.com'))}
         disabled={loading}
-        key="google"
+        key="apple"
       >
-        Sign in with Google
-      </GoogleLoginButton>
+        Sign in with Apple
+      </AppleLoginButton>
     ),
     facebook: (
       <FacebookLoginButton
@@ -89,6 +98,51 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
       >
         Sign in with Facebook
       </FacebookLoginButton>
+    ),
+    github: (
+      <GithubLoginButton
+        onClick={() => signIn(new GithubAuthProvider())}
+        disabled={loading}
+        key="github"
+      >
+        Sign in with GitHub
+      </GithubLoginButton>
+    ),
+    google: (
+      <GoogleLoginButton
+        onClick={() => signIn(new GoogleAuthProvider())}
+        disabled={loading}
+        key="google"
+      >
+        Sign in with Google
+      </GoogleLoginButton>
+    ),
+    microsoft: (
+      <MicrosoftLoginButton
+        onClick={() => signIn(new OAuthProvider('microsoft.com'))}
+        disabled={loading}
+        key="microsoft"
+      >
+        Sign in with Microsoft
+      </MicrosoftLoginButton>
+    ),
+    twitter : (
+      <XLoginButton
+        onClick={() => signIn(new TwitterAuthProvider())}
+        disabled={loading}
+        key="twitter"
+      >
+        Sign in with X
+      </XLoginButton>
+    ),
+    yahoo: (
+      <YahooLoginButton
+        onClick={() => signIn(new OAuthProvider('yahoo.com'))}
+        disabled={loading}
+        key="yahoo"
+      >
+        Sign in with Yahoo
+      </YahooLoginButton>
     ),
     email: (
       <EmailLoginButton

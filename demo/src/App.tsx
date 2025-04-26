@@ -22,7 +22,10 @@ function InnerContent() {
 function App() {
   return (
     <SimpleLogInPage
-      methods={['email', 'google', 'facebook']}
+      methods={[
+        'google', 'facebook', 'apple', 'microsoft',
+        'twitter', 'yahoo', 'github', 'email',
+      ]}
       requireVerification
       popup
       header={<h1>Demo App</h1>}
