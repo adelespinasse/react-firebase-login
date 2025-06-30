@@ -29,6 +29,7 @@ export function SimpleLogInPage({
             justifyContent: 'center',
             height: '100vh',
             width: '100vw',
+            position: 'fixed',
           }}
         >
           { header }
