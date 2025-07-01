@@ -1,5 +1,5 @@
 import { type PropsWithChildren } from 'react';
-import { LogInUI, type LogInUIProps, RequireLogin } from '..';
+import { LogInUI, type LogInUIProps, LogInPage } from '..';
 
 export type SimpleLogInPageProps = PropsWithChildren<LogInUIProps & {
   requireVerification?: boolean;
@@ -17,21 +17,11 @@ export function SimpleLogInPage({
   children,
 }: SimpleLogInPageProps) {
   return (
-    <RequireLogin
+    <LogInPage
+      auth={auth}
       requireVerification={requireVerification}
       loginComponent={
-        <div
-          className="react-firebase-login-simple-login-page"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100vh',
-            width: '100vw',
-            position: 'fixed',
-          }}
-        >
+        <>
           { header }
           <LogInUI
             auth={auth}
@@ -39,10 +29,10 @@ export function SimpleLogInPage({
             popup={popup}
           />
           { footer }
-        </div>
+        </>
       }
     >
       { children }
-    </RequireLogin>
+    </LogInPage>
   );
 }
