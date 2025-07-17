@@ -1,6 +1,6 @@
 {
-  "name": "@adelespinasse/react-firebase-login",
-  "version": "0.0.8",
+  "name": "@aldel/react-firebase-login",
+  "version": "0.0.9",
   "description": "React components for Firebase authentication",
   "keywords": ["react", "firebase", "authentication", "login", "signin", "signup"],
   "homepage": "https://github.com/adelespinasse/react-firebase-login",
@@ -42,6 +42,7 @@
     "build:demo": "vite build --config vite.config.demo.ts",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "format": "prettier . --write --ignore-unknown",
+    "prepack": "npm run build:lib",
     "prepare": "husky install",
     "prepublishOnly": "npm run build"
   },

@@ -1,4 +1,11 @@
-import { type PropsWithChildren, useCallback, useEffect, useState } from 'react';
+import {
+  type PropsWithChildren,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import {
   type Auth,
   type User,
@@ -7,11 +14,19 @@ import {
   getAuth,
   reload,
   sendEmailVerification,
+  type IdTokenResult,
 } from 'firebase/auth';
 import { type FirebaseError } from 'firebase/app';
 
 import { LogOutButton } from '../LogOutButton/LogOutButton';
 import { formatFirebaseError, isNewUser } from '../shared';
+
+export type UserContextType = {
+  user: User,
+  claims: Record<string, unknown>,
+};
+
+const UserContext = createContext<UserContextType | null>(null);
 
 export type RequireLoginProps = PropsWithChildren<{
   auth?: Auth;
@@ -31,6 +46,7 @@ export function RequireLogin({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [tokenResult, setTokenResult] = useState<IdTokenResult | null>(null);
 
   const sendVerification = useCallback(async () => {
     if (!user) {
@@ -78,6 +94,23 @@ export function RequireLogin({
     [authInstance, authStateHandler],
   );
 
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+    const fetchTokenResult = async () => {
+      try {
+        const result = await user.getIdTokenResult();
+        setTokenResult(result);
+      } catch (error) {
+        console.error('Error fetching ID token result:', error);
+        setTokenResult(null);
+      }
+    };
+
+    fetchTokenResult();
+  }, [user]);
+
   if (!initialized) {
     return null;
   }
@@ -111,6 +144,24 @@ export function RequireLogin({
       </div>
     );
   }
+  if (!tokenResult) {
+    return null;
+  }
+  const claims = tokenResult.claims;
 
-  return children;
+  return (
+    <UserContext.Provider value={{ user, claims }}>
+      {children}
+    </UserContext.Provider>
+  );
+}
+
+// Throws an error if used outside of a RequireLogin component (or a component
+// that uses RequireLogin, like LogInPage or SimpleLogInPage).
+export function useUser(): UserContextType {
+  const userContext = useContext(UserContext);
+  if (!userContext) {
+    throw new Error('useUser must be used within a RequireLogin component');
+  }
+  return userContext;
 }
