@@ -1,6 +1,6 @@
 {
   "name": "@aldel/react-firebase-login",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "React components for Firebase authentication",
   "keywords": ["react", "firebase", "authentication", "login", "signin", "signup"],
   "homepage": "https://github.com/adelespinasse/react-firebase-login",
@@ -43,8 +43,8 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "format": "prettier . --write --ignore-unknown",
     "prepack": "npm run build:lib",
-    "prepare": "husky install",
-    "prepublishOnly": "npm run build"
+    "prepare": "echo DISABLED husky install",
+    "prepublishOnly": "echo DISABLED npm run build"
   },
   "devDependencies": {
     "@storybook/addon-actions": "^8.5.3",
