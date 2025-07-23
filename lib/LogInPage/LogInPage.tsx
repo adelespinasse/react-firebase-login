@@ -4,7 +4,8 @@ export type LogInPageProps = RequireLoginProps;
 
 export function LogInPage({
   auth,
-  requireVerification,
+  requireVerification = false,
+  allowAnonymous = false,
   loginComponent,
   children,
 }: LogInPageProps) {
@@ -12,6 +13,7 @@ export function LogInPage({
     <RequireLogin
       auth={auth}
       requireVerification={requireVerification}
+      allowAnonymous={allowAnonymous}
       loginComponent={
         <div
           className="react-firebase-login-page"

@@ -14,6 +14,7 @@ import {
   getAuth,
   reload,
   sendEmailVerification,
+  signInAnonymously,
   type IdTokenResult,
 } from 'firebase/auth';
 import { type FirebaseError } from 'firebase/app';
@@ -28,20 +29,29 @@ export type UserContextType = {
 
 const UserContext = createContext<UserContextType | null>(null);
 
-export type RequireLoginProps = PropsWithChildren<{
+// Props for any component that behaves like RequireLogin, in that it requires
+// authentication to show its children and shows something else if not
+// authenticated.
+export type LoginProps = PropsWithChildren<{
   auth?: Auth;
-  loginComponent: React.ReactNode;
   requireVerification?: boolean;
+  allowAnonymous?: boolean;
 }>;
+
+export type RequireLoginProps = LoginProps & {
+  loginComponent: React.ReactNode;
+};
 
 export function RequireLogin({
   auth,
-  loginComponent,
   requireVerification = false,
+  allowAnonymous = false,
+  loginComponent,
   children,
 }: RequireLoginProps) {
   const authInstance = auth || getAuth();
   const [initialized, setInitialized] = useState(false);
+  // This `verified` really means "verified OR anonymous user OR verification is not required"
   const [verified, setVerified] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,20 +78,37 @@ export function RequireLogin({
   const authStateHandler = useCallback(async (user: User | null) => {
     if (user) {
       // console.log('Signed in as', user);
-      setUser(user);
-      if (requireVerification && !user.emailVerified) {
-        if (isNewUser(user)) {
-          await sendVerification();
+      if (!user.isAnonymous) {
+        setUser(user);
+        if (requireVerification && !user.emailVerified) {
+          if (isNewUser(user)) {
+            await sendVerification();
+          }
+        } else {
+          setVerified(true);
         }
+        setInitialized(true);
       } else {
-        setVerified(true);
+        if (allowAnonymous) {
+          setUser(user);
+          setVerified(true);
+          setInitialized(true);
+        } else {
+          setUser(null);
+          setVerified(false);
+          setInitialized(true);
+        }
       }
     } else {
-      setUser(null);
-      setVerified(false);
+      if (allowAnonymous) {
+        signInAnonymously(authInstance);
+      } else {
+        setUser(null);
+        setVerified(false);
+        setInitialized(true);
+      }
     }
-    setInitialized(true);
-  }, [requireVerification, sendVerification]);
+  }, [allowAnonymous, authInstance, requireVerification, sendVerification]);
 
   useEffect(
     () => onAuthStateChanged(authInstance, authStateHandler),

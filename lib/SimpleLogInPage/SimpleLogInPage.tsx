@@ -1,8 +1,7 @@
 import { type PropsWithChildren } from 'react';
-import { LogInUI, type LogInUIProps, LogInPage } from '..';
+import { LogInUI, type LoginProps, type LogInUIProps, LogInPage } from '..';
 
-export type SimpleLogInPageProps = PropsWithChildren<LogInUIProps & {
-  requireVerification?: boolean;
+export type SimpleLogInPageProps = PropsWithChildren<LoginProps & LogInUIProps & {
   header?: React.ReactNode;
   footer?: React.ReactNode;
 }>;
@@ -10,7 +9,8 @@ export type SimpleLogInPageProps = PropsWithChildren<LogInUIProps & {
 export function SimpleLogInPage({
   auth,
   methods,
-  requireVerification,
+  requireVerification = false,
+  allowAnonymous = false,
   popup,
   header,
   footer,
@@ -20,6 +20,7 @@ export function SimpleLogInPage({
     <LogInPage
       auth={auth}
       requireVerification={requireVerification}
+      allowAnonymous={allowAnonymous}
       loginComponent={
         <>
           { header }

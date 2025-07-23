@@ -4,6 +4,8 @@ A set of React components that make it stupidly simple to add Firebase Authentic
 
 Status: Not ready for use!
 
+Note possibly surprising behavior if both allowAnonymous and requireVerification are true.
+
 [Live demo](https://react-firebase-login-273c0.firebaseapp.com/)
 
 ## License
