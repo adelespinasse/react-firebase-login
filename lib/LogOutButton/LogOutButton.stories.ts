@@ -14,7 +14,7 @@ export default meta;
 
 type Story = StoryObj<typeof LogOutButton>;
 
-export const DefaultLogInUI: Story = {
+export const Default: Story = {
   args: {
     style: {
       backgroundColor: '#4275a4',

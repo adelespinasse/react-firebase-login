@@ -33,7 +33,7 @@
     }
   },
   "scripts": {
-    "dev": "storybook dev -p 6006",
+    "dev": "firebase emulators:start --only auth,ui & storybook dev -p 6006",
     "demo": "vite --config vite.config.demo.ts",
     "test": "vitest run",
     "test:watch": "vitest",

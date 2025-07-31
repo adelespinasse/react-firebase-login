@@ -25,6 +25,7 @@ import { formatFirebaseError, isNewUser } from '../shared';
 export type UserContextType = {
   user: User,
   claims: Record<string, unknown>,
+  linkProvider: () => void,
 };
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -57,6 +58,19 @@ export function RequireLogin({
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [tokenResult, setTokenResult] = useState<IdTokenResult | null>(null);
+  const [linking, setLinking] = useState(false);
+
+  const linkProvider = useCallback(() => {
+    if (!user) {
+      setError('Something is broken');
+      return;
+    }
+    setLinking(true);
+  }, [user]);
+
+  const cancelLinking = useCallback(() => {
+    setLinking(false);
+  }, []);
 
   const sendVerification = useCallback(async () => {
     if (!user) {
@@ -171,13 +185,27 @@ export function RequireLogin({
       </div>
     );
   }
+  if (linking) {
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        { loginComponent }
+        <button
+          className="react-firebase-login-cancel-linking-button"
+          style={{ position: 'absolute', top: 0, right: 0, zIndex: 1000 }}
+          onClick={cancelLinking}
+        >
+          🗙
+        </button>
+      </div>
+    );
+  }
   if (!tokenResult) {
     return null;
   }
   const claims = tokenResult.claims;
 
   return (
-    <UserContext.Provider value={{ user, claims }}>
+    <UserContext.Provider value={{ user, claims, linkProvider }}>
       {children}
     </UserContext.Provider>
   );

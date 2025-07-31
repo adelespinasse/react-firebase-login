@@ -1,9 +1,12 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   FacebookAuthProvider,
   getAuth,
+  getRedirectResult,
   GithubAuthProvider,
   GoogleAuthProvider,
+  linkWithPopup,
+  linkWithRedirect,
   OAuthProvider,
   signInWithPopup,
   signInWithRedirect,
@@ -49,6 +52,7 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const authInstance = auth || getAuth();
+  const user = authInstance.currentUser;
 
   // Converts a FirebaseError to a relatively human-friendly string (the
   // err.message is not very human-friendly).
@@ -56,20 +60,43 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
     setError(formatFirebaseError(error));
   }, []);
 
+  useEffect(() => {
+    const go = async () => {
+      try {
+        const result = await getRedirectResult(authInstance);
+        if (result) {
+          setIsNewUser(result);
+        }
+      } catch (err) {
+        setFirebaseError(err as FirebaseError);
+      }
+    };
+    go();
+  }, [authInstance, setFirebaseError]);
+
   const signIn = useCallback(
     async (provider: AuthProvider) => {
       setLoading(true);
       try {
         if (popup) {
-          await signInWithPopup(authInstance, provider)
-            .then((userCredential) => {
-              setIsNewUser(userCredential);
-            });
+          const getCredential = () => {
+            if (user) {
+              // User is already authenticated (possibly anonymously), so we want
+              // to link a new provider to the user account. Most commonly this
+              // means upgrading an anonymous account to a named account.
+              return linkWithPopup(user, provider);
+            }
+            return signInWithPopup(authInstance, provider);
+          };
+          const credential = await getCredential();
+          setIsNewUser(credential);
         } else {
-          await signInWithRedirect(authInstance, provider)
-            .then((userCredential) => {
-              setIsNewUser(userCredential);
-            });
+          if (user) {
+            // User is already authenticated, etc.
+            linkWithRedirect(user, provider);
+          } else {
+            signInWithRedirect(authInstance, provider);
+          }
         }
       } catch (err) {
         setFirebaseError(err as FirebaseError);
@@ -77,7 +104,7 @@ export function LogInUI({ auth, methods, popup }: LogInUIProps) {
         setLoading(false);
       }
     },
-    [authInstance, popup, setFirebaseError],
+    [authInstance, popup, setFirebaseError, user],
   );
 
   const methodMap = {

@@ -16,7 +16,20 @@ type Story = StoryObj<typeof LogInUI>;
 
 export const DefaultLogInUI: Story = {
   args: {
-    methods: ['google', 'email'],
     popup: false,
+  },
+};
+
+export const Popup: Story = {
+  args: {
+    ...DefaultLogInUI.args,
+    popup: true,
+  },
+};
+
+export const MoreMethods: Story = {
+  args: {
+    ...DefaultLogInUI.args,
+    methods: ['google', 'apple', 'github', 'twitter', 'email'],
   },
 };

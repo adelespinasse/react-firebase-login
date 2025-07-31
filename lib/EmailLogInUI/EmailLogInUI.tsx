@@ -2,9 +2,11 @@ import { useCallback, useState } from 'react';
 import {
   type Auth,
   getAuth,
+  linkWithCredential,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
+  EmailAuthProvider,
 } from 'firebase/auth';
 import { type FirebaseError } from 'firebase/app';
 
@@ -31,13 +33,15 @@ export type LogInUIProps = {
 };
 
 export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
-  const [loginState, setLoginState] = useState<'signin' | 'create' | 'forgot' | 'sent'>('signin');
+  const authInstance = auth || getAuth();
+  const [loginState, setLoginState] = useState<'signin' | 'create' | 'forgot' | 'sent'>(
+    authInstance.currentUser ?  'create' : 'signin',
+  );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const authInstance = auth || getAuth();
 
   // Converts a FirebaseError to a relatively human-friendly string (the
   // err.message is not very human-friendly).
@@ -129,23 +133,27 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
       case 'create':
         return (
           <form
-            onSubmit={(event) => {
+            onSubmit={async (event) => {
               event.preventDefault();
               if (password !== confirmPassword) {
                 setError('Passwords do not match');
                 return;
               }
               setLoading(true);
-              createUserWithEmailAndPassword(authInstance, email, password)
-                .then((userCredential) => {
-                  setIsNewUser(userCredential);
-                })
-                .catch((err: FirebaseError) => {
-                  setFirebaseError(err);
-                })
-                .finally(() => {
-                  setLoading(false);
-                });
+              try {
+                const userCredential = await (async () => {
+                  if (authInstance.currentUser) {
+                    const credential = EmailAuthProvider.credential(email, password);
+                    return linkWithCredential(authInstance.currentUser, credential);
+                  }
+                  return createUserWithEmailAndPassword(authInstance, email, password);
+                })();
+                setIsNewUser(userCredential);
+              } catch (err) {
+                setFirebaseError(err as FirebaseError);
+              } finally {
+                setLoading(false);
+              }
             }}
           >
             <input

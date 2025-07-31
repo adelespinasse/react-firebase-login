@@ -31,7 +31,9 @@ function newUserLocalStorageKey(user: User) {
 }
 
 export function setIsNewUser(userCredential: UserCredential) {
-  if (getAdditionalUserInfo(userCredential)?.isNewUser) {
+  const addInfo = getAdditionalUserInfo(userCredential);
+  console.log('newUser', addInfo?.isNewUser);
+  if (addInfo?.isNewUser) {
     window.localStorage.setItem(
       newUserLocalStorageKey(userCredential.user),
       'true',
