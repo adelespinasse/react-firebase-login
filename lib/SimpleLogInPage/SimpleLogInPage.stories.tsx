@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 
 import { LogOutButton } from '../LogOutButton';
 import { SimpleLogInPage } from './SimpleLogInPage';
-import { useUser } from '../RequireLogin';
+import { useUser } from '../LoginUI';
 import './storybook.css';
 
 const meta = {
