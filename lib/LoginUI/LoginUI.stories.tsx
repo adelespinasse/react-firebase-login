@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { LoginUI } from './LoginUI';
+import { LoginUI, useUser } from './LoginUI';
+import { LogOutButton } from '../LogOutButton';
 
 const meta = {
   title: 'LoginUI',
@@ -13,9 +14,21 @@ export default meta;
 
 type Story = StoryObj<typeof LoginUI>;
 
+function UserProfile() {
+  const { user } = useUser();
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <h2>Welcome, {user.email || 'User'}!</h2>
+      <p>UID: {user.uid}</p>
+      <LogOutButton />
+    </div>
+  );
+}
+
 export const Default: Story = {
   args: {
     popup: false,
+    children: <UserProfile />,
   },
 };
 
@@ -23,6 +36,7 @@ export const MultipleMethods: Story = {
   args: {
     methods: ['google', 'apple', 'github', 'facebook', 'email'],
     popup: false,
+    children: <UserProfile />,
   },
 };
 
