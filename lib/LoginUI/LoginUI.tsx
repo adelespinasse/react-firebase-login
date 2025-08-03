@@ -27,6 +27,8 @@ import {
   signInWithRedirect,
   TwitterAuthProvider,
   type AuthProvider,
+  getAdditionalUserInfo,
+  type UserCredential,
 } from 'firebase/auth';
 import { type FirebaseError } from 'firebase/app';
 import {
@@ -42,7 +44,7 @@ import {
 
 import { EmailLogInUI } from '../EmailLogInUI';
 import { LogOutButton } from '../LogOutButton/LogOutButton';
-import { containerStyle, formatFirebaseError, isNewUser, setIsNewUser } from '../shared';
+import { containerStyle, formatFirebaseError } from '../shared';
 
 export type UserContextType = {
   user: User,
@@ -125,15 +127,23 @@ export function LoginUI({
     }
   }, [user]);
 
+  const handleNewUserVerification = useCallback(async (credential: UserCredential) => {
+    if (requireVerification) {
+      const additionalInfo = getAdditionalUserInfo(credential);
+      if (additionalInfo?.isNewUser && !credential.user.emailVerified) {
+        await sendVerification();
+      }
+    }
+  }, [requireVerification, sendVerification]);
+
   const authStateHandler = useCallback(async (user: User | null) => {
     if (user) {
       // console.log('Signed in as', user);
       if (!user.isAnonymous) {
         setUser(user);
         if (requireVerification && !user.emailVerified) {
-          if (isNewUser(user)) {
-            await sendVerification();
-          }
+          // Verification will be handled during sign-in flow for new users
+          setVerified(false);
         } else {
           setVerified(true);
         }
@@ -158,7 +168,7 @@ export function LoginUI({
         setInitialized(true);
       }
     }
-  }, [allowAnonymous, authInstance, requireVerification, sendVerification]);
+  }, [allowAnonymous, authInstance, requireVerification]);
 
   useEffect(
     () => onAuthStateChanged(authInstance, authStateHandler),
@@ -199,14 +209,14 @@ export function LoginUI({
       try {
         const result = await getRedirectResult(authInstance);
         if (result) {
-          setIsNewUser(result);
+          await handleNewUserVerification(result);
         }
       } catch (err) {
         setFirebaseError(err as FirebaseError);
       }
     };
     go();
-  }, [authInstance, setFirebaseError]);
+  }, [authInstance, setFirebaseError, handleNewUserVerification]);
 
   const signIn = useCallback(
     async (provider: AuthProvider) => {
@@ -223,7 +233,7 @@ export function LoginUI({
             return signInWithPopup(authInstance, provider);
           };
           const credential = await getCredential();
-          setIsNewUser(credential);
+          await handleNewUserVerification(credential);
         } else {
           if (user) {
             // User is already authenticated, etc.
@@ -238,7 +248,7 @@ export function LoginUI({
         setLoading(false);
       }
     },
-    [authInstance, popup, setFirebaseError, user],
+    [authInstance, popup, setFirebaseError, user, handleNewUserVerification],
   );
 
   const methodMap = {
@@ -319,6 +329,7 @@ export function LoginUI({
       return <EmailLogInUI
         auth={authInstance}
         onClose={() => setPage('home')}
+        onNewUserVerification={handleNewUserVerification}
       />;
     }
 
@@ -343,11 +354,11 @@ export function LoginUI({
   if (!initialized) {
     return null;
   }
-  
+
   if (!user) {
     return wrapWithFrame(renderLoginContent());
   }
-  
+
   if (sending) {
     return wrapWithFrame(
       <div className="react-firebase-login-verification-container">
@@ -355,7 +366,7 @@ export function LoginUI({
       </div>
     );
   }
-  
+
   if (!verified) {
     return wrapWithFrame(
       <div className="react-firebase-login-verification-container">
@@ -376,7 +387,7 @@ export function LoginUI({
       </div>
     );
   }
-  
+
   if (linking) {
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -391,11 +402,11 @@ export function LoginUI({
       </div>
     );
   }
-  
+
   if (!tokenResult) {
     return null;
   }
-  
+
   const claims = tokenResult.claims;
 
   return (

@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import {
   type Auth,
+  type UserCredential,
   getAuth,
   linkWithCredential,
   signInWithEmailAndPassword,
@@ -10,7 +11,7 @@ import {
 } from 'firebase/auth';
 import { type FirebaseError } from 'firebase/app';
 
-import { containerStyle, formatFirebaseError, setIsNewUser } from '../shared';
+import { containerStyle, formatFirebaseError } from '../shared';
 
 const buttonContainerStyle = {
   display: 'flex',
@@ -30,9 +31,10 @@ const inputStyle = {
 export type LogInUIProps = {
   auth?: Auth;
   onClose: () => void;
+  onNewUserVerification?: (credential: UserCredential) => Promise<void>;
 };
 
-export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
+export function EmailLogInUI({ auth, onClose, onNewUserVerification }: LogInUIProps) {
   const authInstance = auth || getAuth();
   const [loginState, setLoginState] = useState<'signin' | 'create' | 'forgot' | 'sent'>(
     authInstance.currentUser ?  'create' : 'signin',
@@ -148,7 +150,9 @@ export function EmailLogInUI({ auth, onClose }: LogInUIProps) {
                   }
                   return createUserWithEmailAndPassword(authInstance, email, password);
                 })();
-                setIsNewUser(userCredential);
+                if (onNewUserVerification) {
+                  await onNewUserVerification(userCredential);
+                }
               } catch (err) {
                 setFirebaseError(err as FirebaseError);
               } finally {
