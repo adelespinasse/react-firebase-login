@@ -80,7 +80,7 @@ const EmailLoginButton = createButton({
 
 export function LoginUI({
   auth,
-  requireVerification = false,
+  requireVerification = true,
   allowAnonymous = false,
   methods,
   popup,

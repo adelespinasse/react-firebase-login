@@ -29,6 +29,7 @@ function UserProfile() {
 export const Default: Story = {
   args: {
     popup: false,
+    requireVerification: false,
     header: <h2>Welcome</h2>,
     footer: 'Please sign in to continue',
     children: <UserProfile />,
