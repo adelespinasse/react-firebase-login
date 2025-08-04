@@ -1,5 +1,3 @@
-export * from './LogInPage';
-export * from './LogInUI';
+export * from './FirebaseLogin';
 export * from './LogOutButton';
-export * from './RequireLogin';
-export * from './SimpleLogInPage';
+export * from './frames';

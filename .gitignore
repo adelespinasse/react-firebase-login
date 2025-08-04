@@ -4,3 +4,4 @@ storybook-static
 coverage
 .firebase/
 *.tgz
+firebase*.log

@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 
-import { LogOutButton, SimpleLogInPage, useUser } from '../../lib';
+import { LogOutButton, FirebaseLogin, useUser, FullPageFrame } from '../../lib';
 
 import { firebaseConfig } from './firebaseConfig';
 import './main.css';
@@ -25,7 +25,7 @@ function InnerContent() {
 
 function App() {
   return (
-    <SimpleLogInPage
+    <FirebaseLogin
       methods={[
         'google', 'facebook', 'apple', 'microsoft',
         'twitter', 'yahoo', 'github', 'email',
@@ -33,9 +33,10 @@ function App() {
       requireVerification
       popup
       header={<h1>Demo App</h1>}
+      frame={FullPageFrame}
     >
       <InnerContent />
-    </SimpleLogInPage>
+    </FirebaseLogin>
   );
 }
 

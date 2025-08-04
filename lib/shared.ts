@@ -1,9 +1,4 @@
 import { type FirebaseError } from 'firebase/app';
-import {
-  getAdditionalUserInfo,
-  type User,
-  type UserCredential,
-} from 'firebase/auth';
 
 export function formatFirebaseError(error: FirebaseError): string {
   const suffix = error.code?.split('/').splice(-1)[0];
@@ -23,30 +18,3 @@ export const containerStyle: React.CSSProperties = {
   color: '#000',
   padding: '1em',
 };
-
-// Janky way for  signal to RequireLogin component that this is a new user
-
-function newUserLocalStorageKey(user: User) {
-  return `react-firebase-login-newuser-${user.uid}`;
-}
-
-export function setIsNewUser(userCredential: UserCredential) {
-  const addInfo = getAdditionalUserInfo(userCredential);
-  console.log('newUser', addInfo?.isNewUser);
-  if (addInfo?.isNewUser) {
-    window.localStorage.setItem(
-      newUserLocalStorageKey(userCredential.user),
-      'true',
-    );
-  }
-}
-
-// Resets the new user flag in local storage, so not idempotent!
-export function isNewUser(user: User) {
-  const key = newUserLocalStorageKey(user);
-  const result = Boolean(window.localStorage.getItem(key));
-  if (result) {
-    window.localStorage.removeItem(key);
-  }
-  return result;
-}
