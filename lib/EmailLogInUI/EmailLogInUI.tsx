@@ -31,10 +31,10 @@ const inputStyle = {
 export type LogInUIProps = {
   auth?: Auth;
   onClose: () => void;
-  onNewUserVerification?: (credential: UserCredential) => Promise<void>;
+  handleUserCredential?: (credential: UserCredential) => Promise<void>;
 };
 
-export function EmailLogInUI({ auth, onClose, onNewUserVerification }: LogInUIProps) {
+export function EmailLogInUI({ auth, onClose, handleUserCredential }: LogInUIProps) {
   const authInstance = auth || getAuth();
   const [loginState, setLoginState] = useState<'signin' | 'create' | 'forgot' | 'sent'>(
     authInstance.currentUser ?  'create' : 'signin',
@@ -150,8 +150,8 @@ export function EmailLogInUI({ auth, onClose, onNewUserVerification }: LogInUIPr
                   }
                   return createUserWithEmailAndPassword(authInstance, email, password);
                 })();
-                if (onNewUserVerification) {
-                  await onNewUserVerification(userCredential);
+                if (handleUserCredential) {
+                  await handleUserCredential(userCredential);
                 }
               } catch (err) {
                 setFirebaseError(err as FirebaseError);

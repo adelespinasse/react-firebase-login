@@ -2,6 +2,7 @@ import type { Preview } from '@storybook/react';
 import { initializeApp } from 'firebase/app';
 import { connectAuthEmulator } from 'firebase/auth';
 import { getAuth } from 'firebase/auth';
+import './global.css';
 
 initializeApp({
   apiKey: 'AIzaSyCnT91mQqEiQW6yS2lAbbezpnUX8pzk_no',

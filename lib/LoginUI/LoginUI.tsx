@@ -45,11 +45,12 @@ import {
 import { EmailLogInUI } from '../EmailLogInUI';
 import { LogOutButton } from '../LogOutButton/LogOutButton';
 import { containerStyle, formatFirebaseError } from '../shared';
+import { type FrameComponent, NoFrame } from '../frames';
 
 export type UserContextType = {
   user: User,
   claims: Record<string, unknown>,
-  linkProvider: () => void,
+  signInAndLink: () => void,
 };
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -57,14 +58,14 @@ const UserContext = createContext<UserContextType | null>(null);
 export type LogInMethod = 'apple' | 'facebook' | 'github' | 'google'
   | 'microsoft' | 'twitter' | 'yahoo' | 'email';
 
-export type FrameComponent = ({ children }: { children: React.ReactNode }) => React.ReactNode;
-
 export type LoginUIProps = PropsWithChildren<{
   auth?: Auth;
   requireVerification?: boolean;
   allowAnonymous?: boolean;
   methods?: LogInMethod[];
   popup?: boolean;
+  header?: React.ReactNode;
+  footer?: React.ReactNode;
   frame?: FrameComponent;
 }>;
 
@@ -83,7 +84,9 @@ export function LoginUI({
   allowAnonymous = false,
   methods,
   popup,
-  frame,
+  header = null,
+  footer = null,
+  frame = NoFrame,
   children,
 }: LoginUIProps) {
   const authInstance = auth || getAuth();
@@ -98,7 +101,7 @@ export function LoginUI({
   const [page, setPage] = useState<'home' | 'email'>('home');
   const [loading, setLoading] = useState(false);
 
-  const linkProvider = useCallback(() => {
+  const signInAndLink = useCallback(() => {
     if (!user) {
       setError('Something is broken');
       return;
@@ -127,7 +130,8 @@ export function LoginUI({
     }
   }, [user]);
 
-  const handleNewUserVerification = useCallback(async (credential: UserCredential) => {
+  const handleUserCredential = useCallback(async (credential: UserCredential) => {
+    setLinking(false);
     if (requireVerification) {
       const additionalInfo = getAdditionalUserInfo(credential);
       if (additionalInfo?.isNewUser && !credential.user.emailVerified) {
@@ -209,14 +213,14 @@ export function LoginUI({
       try {
         const result = await getRedirectResult(authInstance);
         if (result) {
-          await handleNewUserVerification(result);
+          await handleUserCredential(result);
         }
       } catch (err) {
         setFirebaseError(err as FirebaseError);
       }
     };
     go();
-  }, [authInstance, setFirebaseError, handleNewUserVerification]);
+  }, [authInstance, setFirebaseError, handleUserCredential]);
 
   const signIn = useCallback(
     async (provider: AuthProvider) => {
@@ -233,7 +237,7 @@ export function LoginUI({
             return signInWithPopup(authInstance, provider);
           };
           const credential = await getCredential();
-          await handleNewUserVerification(credential);
+          await handleUserCredential(credential);
         } else {
           if (user) {
             // User is already authenticated, etc.
@@ -248,7 +252,7 @@ export function LoginUI({
         setLoading(false);
       }
     },
-    [authInstance, popup, setFirebaseError, user, handleNewUserVerification],
+    [authInstance, popup, setFirebaseError, user, handleUserCredential],
   );
 
   const methodMap = {
@@ -329,7 +333,7 @@ export function LoginUI({
       return <EmailLogInUI
         auth={authInstance}
         onClose={() => setPage('home')}
-        onNewUserVerification={handleNewUserVerification}
+        handleUserCredential={handleUserCredential}
       />;
     }
 
@@ -344,23 +348,50 @@ export function LoginUI({
     );
   };
 
-  const wrapWithFrame = (content: React.ReactNode) => {
-    if (frame) {
-      return frame({ children: content });
-    }
-    return content;
+  const wrapped = (children: React.ReactNode) => {
+    return frame(
+      <div
+        className="react-firebase-login-container"
+        style={{
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {header}
+        { linking && (
+          <button
+            className="react-firebase-login-cancel-linking-button"
+            style={{
+              position: 'absolute',
+              top: 0, right: 0, zIndex: 1000,
+              border: 'none',
+              backgroundColor: 'transparent', color: '#447',
+              margin: 0, padding: 2,
+            }}
+            onClick={cancelLinking}
+          >
+            🗙
+          </button>
+        )}
+        {children}
+        {footer}
+      </div>
+    );
   };
 
   if (!initialized) {
-    return null;
+    return wrapped(null);
   }
 
   if (!user) {
-    return wrapWithFrame(renderLoginContent());
+    return wrapped(renderLoginContent());
   }
 
   if (sending) {
-    return wrapWithFrame(
+    return wrapped(
       <div className="react-firebase-login-verification-container">
         <h2>Sending verification email...</h2>
       </div>
@@ -368,7 +399,7 @@ export function LoginUI({
   }
 
   if (!verified) {
-    return wrapWithFrame(
+    return wrapped(
       <div className="react-firebase-login-verification-container">
         <p>
           A verification link has been sent to {user.email}. Click the provided link,
@@ -389,18 +420,7 @@ export function LoginUI({
   }
 
   if (linking) {
-    return (
-      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-        {wrapWithFrame(renderLoginContent())}
-        <button
-          className="react-firebase-login-cancel-linking-button"
-          style={{ position: 'absolute', top: 0, right: 0, zIndex: 1000 }}
-          onClick={cancelLinking}
-        >
-          🗙
-        </button>
-      </div>
-    );
+    return wrapped(renderLoginContent());
   }
 
   if (!tokenResult) {
@@ -410,7 +430,7 @@ export function LoginUI({
   const claims = tokenResult.claims;
 
   return (
-    <UserContext.Provider value={{ user, claims, linkProvider }}>
+    <UserContext.Provider value={{ user, claims, signInAndLink }}>
       {children}
     </UserContext.Provider>
   );

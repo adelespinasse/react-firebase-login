@@ -1,6 +1,6 @@
 {
   "name": "@aldel/react-firebase-login",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "React components for Firebase authentication",
   "keywords": ["react", "firebase", "authentication", "login", "signin", "signup"],
   "homepage": "https://github.com/adelespinasse/react-firebase-login",

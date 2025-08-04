@@ -16,14 +16,6 @@ type Story = StoryObj<typeof LogOutButton>;
 
 export const Default: Story = {
   args: {
-    style: {
-      backgroundColor: '#4275a4',
-      color: '#fff',
-      borderRadius: '0.2em',
-      padding: '0.2em 1em',
-      border: 'none',
-      cursor: 'pointer',
-    },
     onLogOut: () => {
       alert('Signed out');
     },

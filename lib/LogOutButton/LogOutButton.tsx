@@ -20,6 +20,7 @@ export function LogOutButton({ auth, onLogOut, ...rest }: LogOutButtonProps) {
 
   return (
     <button
+      className="react-firebase-login-log-out-button"
       onClick={onClick}
       {...rest}
     >
