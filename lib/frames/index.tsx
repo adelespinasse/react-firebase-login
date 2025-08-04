@@ -1,9 +1,9 @@
 
 export type FrameComponent = (children: React.ReactNode) => React.ReactNode;
 
-export const NoFrame: FrameComponent = (children) => children;
+export const noFrame: FrameComponent = (children) => children;
 
-export const FullPageFrame: FrameComponent = (children) => (
+export const fullPageFrame: FrameComponent = (children) => (
   <div
     className="react-firebase-login-page"
     style={{

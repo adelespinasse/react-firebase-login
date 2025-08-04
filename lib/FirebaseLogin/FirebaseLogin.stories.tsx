@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { FirebaseLogin, useUser } from './FirebaseLogin';
 import { LogOutButton } from '../LogOutButton';
-import { FullPageFrame } from '../frames';
+import { fullPageFrame } from '../frames';
 
 const meta = {
   title: 'FirebaseLogin',
@@ -68,7 +68,7 @@ export const WithFrame: Story = {
 export const WithFullPageFrame: Story = {
   args: {
     ...Default.args,
-    frame: FullPageFrame,
+    frame: fullPageFrame,
   },
 };
 
