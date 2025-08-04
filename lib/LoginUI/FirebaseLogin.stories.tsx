@@ -1,19 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { LoginUI, useUser } from './LoginUI';
+import { FirebaseLogin, useUser } from './FirebaseLogin';
 import { LogOutButton } from '../LogOutButton';
 import { FullPageFrame } from '../frames';
 
 const meta = {
-  title: 'LoginUI',
-  component: LoginUI,
+  title: 'FirebaseLogin',
+  component: FirebaseLogin,
   parameters: {
     layout: 'centered',
   },
-} satisfies Meta<typeof LoginUI>;
+} satisfies Meta<typeof FirebaseLogin>;
 
 export default meta;
 
-type Story = StoryObj<typeof LoginUI>;
+type Story = StoryObj<typeof FirebaseLogin>;
 
 function UserProfile() {
   const { user } = useUser();

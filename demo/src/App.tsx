@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 
-import { LogOutButton, LoginUI, useUser, FullPageFrame } from '../../lib';
+import { LogOutButton, FirebaseLogin, useUser, FullPageFrame } from '../../lib';
 
 import { firebaseConfig } from './firebaseConfig';
 import './main.css';
@@ -25,7 +25,7 @@ function InnerContent() {
 
 function App() {
   return (
-    <LoginUI
+    <FirebaseLogin
       methods={[
         'google', 'facebook', 'apple', 'microsoft',
         'twitter', 'yahoo', 'github', 'email',
@@ -36,7 +36,7 @@ function App() {
       frame={FullPageFrame}
     >
       <InnerContent />
-    </LoginUI>
+    </FirebaseLogin>
   );
 }
 

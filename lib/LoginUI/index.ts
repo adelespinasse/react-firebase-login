@@ -1,1 +1,1 @@
-export * from './LoginUI';
+export * from './FirebaseLogin';

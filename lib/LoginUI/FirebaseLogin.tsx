@@ -78,7 +78,7 @@ const EmailLoginButton = createButton({
   },
 });
 
-export function LoginUI({
+export function FirebaseLogin({
   auth,
   requireVerification = true,
   allowAnonymous = false,
@@ -436,11 +436,11 @@ export function LoginUI({
   );
 }
 
-// Throws an error if used outside of a LoginUI component.
+// Throws an error if used outside of a FirebaseLogin component.
 export function useUser(): UserContextType {
   const userContext = useContext(UserContext);
   if (!userContext) {
-    throw new Error('useUser must be used within a LoginUI component');
+    throw new Error('useUser must be used within a FirebaseLogin component');
   }
   return userContext;
 }
