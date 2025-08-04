@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 
-import { LogOutButton, FirebaseLogin, useUser, FullPageFrame } from '../../lib';
+import { LogOutButton, FirebaseLogin, useUser, fullPageFrame } from '../../lib';
 
 import { firebaseConfig } from './firebaseConfig';
 import './main.css';
@@ -33,7 +33,7 @@ function App() {
       requireVerification
       popup
       header={<h1>Demo App</h1>}
-      frame={FullPageFrame}
+      frame={fullPageFrame}
     >
       <InnerContent />
     </FirebaseLogin>

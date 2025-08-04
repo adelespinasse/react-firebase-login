@@ -45,7 +45,7 @@ import {
 import { EmailLogInUI } from '../EmailLogInUI';
 import { LogOutButton } from '../LogOutButton/LogOutButton';
 import { containerStyle, formatFirebaseError } from '../shared';
-import { type FrameComponent, NoFrame } from '../frames';
+import { type FrameComponent, noFrame } from '../frames';
 
 export type UserContextType = {
   user: User,
@@ -58,7 +58,7 @@ const UserContext = createContext<UserContextType | null>(null);
 export type LogInMethod = 'apple' | 'facebook' | 'github' | 'google'
   | 'microsoft' | 'twitter' | 'yahoo' | 'email';
 
-export type LoginUIProps = PropsWithChildren<{
+export type FirebaseLoginProps = PropsWithChildren<{
   auth?: Auth;
   requireVerification?: boolean;
   allowAnonymous?: boolean;
@@ -86,9 +86,9 @@ export function FirebaseLogin({
   popup,
   header = null,
   footer = null,
-  frame = NoFrame,
+  frame = noFrame,
   children,
-}: LoginUIProps) {
+}: FirebaseLoginProps) {
   const authInstance = auth || getAuth();
   const [initialized, setInitialized] = useState(false);
   // This `verified` really means "verified OR anonymous user OR verification is not required"
