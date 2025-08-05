@@ -1,8 +1,6 @@
 import {
   type PropsWithChildren,
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useState,
 } from 'react';
@@ -46,26 +44,30 @@ import { EmailLogInUI } from '../EmailLogInUI';
 import { LogOutButton } from '../LogOutButton/LogOutButton';
 import { containerStyle, formatFirebaseError } from '../shared';
 import { type FrameComponent, noFrame } from '../frames';
-
-export type UserContextType = {
-  user: User,
-  claims: Record<string, unknown>,
-  signInAndLink: () => void,
-};
-
-const UserContext = createContext<UserContextType | null>(null);
+import { UserContext } from './useUser';
 
 export type LogInMethod = 'apple' | 'facebook' | 'github' | 'google'
   | 'microsoft' | 'twitter' | 'yahoo' | 'email';
 
 export type FirebaseLoginProps = PropsWithChildren<{
+  /** The Firebase Auth instance to use. If not provided, the default auth instance will be used. */
   auth?: Auth;
+  /** If true, users will be required to verify their email address when they sign up. With
+   * some providers (e.g. Google), verification is automatic. */
   requireVerification?: boolean;
+  /** If true, users will automatically be signed in anonymously. */
   allowAnonymous?: boolean;
+  /** The login methods that will be displayed to the user. */
   methods?: LogInMethod[];
+  /** If true, login methods that support a popup sign-in will use a popup. Otherwise, the
+   * sign-in will be done in a redirect. */
   popup?: boolean;
+  /** A header to display above the login buttons. */
   header?: React.ReactNode;
+  /** A footer to display below the login buttons. */
   footer?: React.ReactNode;
+  /** A function that modifies the login UI. When any login UI is displayed, it is first passed
+   * through this function. This may be used to add extra decoration around the login UI. */
   frame?: FrameComponent;
 }>;
 
@@ -78,6 +80,12 @@ const EmailLoginButton = createButton({
   },
 });
 
+/** A wrapper for components that require the user to be authenticated with Firebase
+ * Authentication. If the user is authenticated (and other requirements are met, such as
+ * requiring email verification when enabled), the children are rendered unaltered. Otherwise a
+ * UI is displayed that allows the user to sign in (and verify their email address if required).
+ *
+ * Components inside this wrapper can access user data and other controls via the `useUser` hook. */
 export function FirebaseLogin({
   auth,
   requireVerification = true,
@@ -434,13 +442,4 @@ export function FirebaseLogin({
       {children}
     </UserContext.Provider>
   );
-}
-
-// Throws an error if used outside of a FirebaseLogin component.
-export function useUser(): UserContextType {
-  const userContext = useContext(UserContext);
-  if (!userContext) {
-    throw new Error('useUser must be used within a FirebaseLogin component');
-  }
-  return userContext;
 }

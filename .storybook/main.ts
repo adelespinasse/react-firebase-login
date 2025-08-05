@@ -2,7 +2,10 @@ import type { StorybookConfig } from '@storybook/react-vite';
 import { withoutVitePlugins } from '@storybook/builder-vite';
 
 const config: StorybookConfig = {
-  stories: ['../lib/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
+  stories: [
+    '../lib/**/*.stories.@(js|jsx|mjs|ts|tsx)',
+    '../lib/**/*.mdx',
+  ],
   addons: ['@storybook/addon-essentials', '@storybook/addon-actions'],
   framework: {
     name: '@storybook/react-vite',
@@ -15,5 +18,8 @@ const config: StorybookConfig = {
     ...config,
     plugins: await withoutVitePlugins(config.plugins, ['vite:dts']), // skip dts plugin
   }),
+  typescript: {
+    reactDocgen: 'react-docgen-typescript',
+  },
 };
 export default config;
