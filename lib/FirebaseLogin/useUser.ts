@@ -4,6 +4,12 @@ import {
 } from 'react';
 import { type User } from 'firebase/auth';
 
+/** The type returned by the `useUser` hook.
+ * @param user - The User object for the current user. This is always valid because the hook can only be
+ * used within a FirebaseLogin component.
+ * @param claims - The user's claims, including standard and custom claimsLKDJF.
+ * @param signInAndLink - A callback function that allows the user to sign in and link a new provider.
+*/
 export type UserContextType = {
   /** The User object for the current user. This is always valid because the hook can only be
    * used within a FirebaseLogin component. */
