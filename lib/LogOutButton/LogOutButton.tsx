@@ -1,11 +1,17 @@
 import React, { useCallback } from 'react';
 import { type Auth, getAuth, signOut } from 'firebase/auth';
 
+/** The props for the {@link LogOutButton} component.
+ * @expand
+ */
 export type LogOutButtonProps = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & {
+  /** The Firebase Auth instance to use. If not provided, the default auth instance will be used. */
   auth?: Auth;
+  /** An extra function to call when the user logs out. */
   onLogOut?: () => void;
 };
 
+/** A "Sign Out" button component that logs the user out of Firebase Auth. */
 export function LogOutButton({ auth, onLogOut, ...rest }: LogOutButtonProps) {
   const onClick = useCallback(async () => {
     try {
