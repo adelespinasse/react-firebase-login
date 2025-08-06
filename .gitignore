@@ -5,3 +5,4 @@ coverage
 .firebase/
 *.tgz
 firebase*.log
+docs/

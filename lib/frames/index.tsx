@@ -1,9 +1,17 @@
+/** A function that modifies rendered React content. The input is generally included in the
+ * output as children of a wrapper component. Used for the `frame` prop of the
+ * {@link FirebaseLogin} component. */
+export type FrameFunction = (children: React.ReactNode) => React.ReactNode;
 
-export type FrameComponent = (children: React.ReactNode) => React.ReactNode;
+/** @ignore for backwards compatibility */
+export type FrameComponent = FrameFunction;
 
-export const noFrame: FrameComponent = (children) => children;
+/** A {@link FrameFunction} that passes its input through unchanged. */
+export const noFrame: FrameFunction = (children) => children;
 
-export const fullPageFrame: FrameComponent = (children) => (
+/** A {@link FrameFunction} that returns a component that fills the viewport, with the input
+ * centered in the middle. */
+export const fullPageFrame: FrameFunction = (children) => (
   <div
     className="react-firebase-login-page"
     style={{

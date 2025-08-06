@@ -28,6 +28,9 @@ const inputStyle = {
   width: '100%',
 };
 
+/** The props for the {@link EmailLogInUI} component.
+ * @expand
+ */
 export type LogInUIProps = {
   auth?: Auth;
   onClose: () => void;
