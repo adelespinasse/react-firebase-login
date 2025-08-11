@@ -53,8 +53,8 @@
     "prepare": "echo DISABLED husky install",
     "prepublishOnly": "echo DISABLED npm run build",
     "run-test-app": "firebase emulators:exec --only auth,ui ./run-test-app.sh",
-    "test-ct": "npx firebase-tools emulators:exec --only auth ./run-playwright-tests.sh",
-    "test-ct-ui": "firebase emulators:exec --only auth,ui ./run-playwright-tests-ui.sh",
+    "test-pw": "npx firebase-tools emulators:exec --only auth ./run-playwright-tests.sh",
+    "test-pw-ui": "firebase emulators:exec --only auth,ui ./run-playwright-tests-ui.sh",
     "test-report": "playwright show-report"
   },
   "devDependencies": {
