@@ -1,4 +1,3 @@
-import { sign } from 'crypto';
 import {
   FirebaseLogin,
   LogOutButton,
@@ -50,3 +49,5 @@ export function FirebaseLoginStory() {
     </FirebaseLogin>
   );
 };
+
+export default FirebaseLoginStory;
