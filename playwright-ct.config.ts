@@ -27,8 +27,14 @@ export default defineConfig({
     /* Port to use for Playwright component endpoint. */
     ctPort: 3100,
 
-    /* Base URL for Firebase emulator */
-    baseURL: 'http://localhost:9099',
+    // /* Base URL for Firebase emulator */
+    // baseURL: 'http://localhost:9099',
+  },
+  webServer: {
+    command: 'vite --config vite.config.testapp.ts',
+    url: 'http://localhost:5173',
+    // reuseExistingServer: !process.env.CI,
+    timeout: 30 * 1000,
   },
 
   /* Configure projects for major browsers */
