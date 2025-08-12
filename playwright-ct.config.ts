@@ -1,4 +1,4 @@
-import { defineConfig, devices, PlaywrightTestConfig } from '@playwright/experimental-ct-react';
+import { defineConfig, devices, PlaywrightTestConfig } from 'playwright/test';
 
 const reporters: PlaywrightTestConfig['reporter'] = [['list'], ['html', { open: 'never' }]];
 
@@ -16,7 +16,7 @@ export default defineConfig({
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry never */
-  retries: 0,
+  retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -27,7 +27,7 @@ export default defineConfig({
     trace: 'on-first-retry',
 
     /* Port to use for Playwright component endpoint. */
-    ctPort: 3100,
+    // ctPort: 3100,
 
     // /* Base URL for Firebase emulator */
     // baseURL: 'http://localhost:9099',

@@ -1,5 +1,4 @@
-import { Page } from 'playwright/test';
-import { test, expect } from '@playwright/experimental-ct-react';
+import { Page, test, expect } from 'playwright/test';
 import { LogInMethod } from '../lib';
 
 async function gotoTestApp({
