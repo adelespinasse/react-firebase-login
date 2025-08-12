@@ -1,27 +1,29 @@
 import {
   FirebaseLogin,
-  LogOutButton,
-  useUser,
+  fullPageFrame,
+  LogoutButton,
+  useAuth,
   type LogInMethod,
 } from '../lib';
 
-function InnerContent() {
-  const { user, claims, signInAndLink } = useUser();
+function InnerContent({ link }: { link: boolean }) {
+  const { user, claims, signIn } = useAuth();
   return (
     <div className="inner-content">
       <p>
         Logged in as { user.isAnonymous ? 'Anonymous User' : user.email || '(No email)' }
       </p>
-      <div>
+      <pre id="uid">{user.uid}</pre>
+      <p>
         { user.isAnonymous ? (
-          <button onClick={signInAndLink}>
-            Sign in and link account
+          <button onClick={() => signIn(link)}>
+            Sign in
           </button>
         ) : (
-          <LogOutButton />
+          <LogoutButton />
         )}
-      </div>
-      Full user object:
+      </p>
+      User object:
       <pre style={{ maxWidth: '800px', overflow: 'auto', border: '1px solid #ccc', padding: '10px', borderRadius: '5px' }}>{JSON.stringify(user, null, 2)}</pre>
       Claims:
       <pre style={{ maxWidth: '800px', overflow: 'auto', border: '1px solid #ccc', padding: '10px', borderRadius: '5px' }}>{JSON.stringify(claims, null, 2)}</pre>
@@ -35,7 +37,7 @@ export function FirebaseLoginStory() {
   const requireVerification = params.get('requireVerification') === 'true';
   const allowAnonymous = params.get('allowAnonymous') === 'true';
   const popup = params.get('popup') === 'true';
-  console.log(methods, requireVerification, allowAnonymous, popup);
+  const link = params.get('link') === 'true';
   return (
     <FirebaseLogin
       methods={methods}
@@ -44,8 +46,9 @@ export function FirebaseLoginStory() {
       popup={popup}
       header={<h2>Firebase Login Test</h2>}
       footer={<p>login test footer</p>}
+      frame={fullPageFrame}
     >
-      <InnerContent />
+      <InnerContent link={link} />
     </FirebaseLogin>
   );
 };

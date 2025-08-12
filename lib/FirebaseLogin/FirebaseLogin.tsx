@@ -40,10 +40,10 @@ import {
 } from 'react-social-login-buttons';
 
 import { EmailLogInUI } from '../EmailLogInUI';
-import { LogOutButton } from '../LogOutButton/LogOutButton';
+import { LogoutButton } from '../LogoutButton/LogoutButton';
 import { containerStyle, formatFirebaseError } from '../shared';
 import { type FrameFunction, noFrame } from '../frames';
-import { UserContext } from './useUser';
+import { AuthContext } from './useAuth';
 
 /** Supported login methods. */
 export type LogInMethod = 'apple' | 'facebook' | 'github' | 'google'
@@ -58,16 +58,18 @@ export type FirebaseLoginProps = {
   /** Defaults to true. If true, users will be required to verify their email address when they
    * sign up. With some providers (e.g. Google), verification is automatic. */
   requireVerification?: boolean;
-  /** If true, the user does not need to sign in; they will automatically be signed in
-   * anonymously, and the children will be displayed. The login UI is displayed only when the
-   * `signInAndLink` function, provided by the {@link useUser} hook, is called. If the user
-   * then signs in, the anonymous account will be upgraded to a normal account with an email
-   * address.]
+  /** If true, the user does not need to sign in; they will automatically be
+   * signed in anonymously, and the children will be displayed. The login UI is
+   * displayed only when the `signIn` function, provided by the {@link useAuth}
+   * hook, is called. If `signIn` is called with its `link` argument set to
+   * `true`, when the user then signs in, the anonymous account will be
+   * upgraded to a normal account with an email address.
    *
-   * The login UI is displayed with a "cancel" button so the user can dismiss it.
+   * The login UI is displayed with a "cancel" button so the user can dismiss
+   * it.
    *
-   * If `allowAnonymous` and `requireVerification` are both true, the user will be required to
-   * verify their email address only when they sign in. */
+   * If `allowAnonymous` and `requireVerification` are both true, the user will
+   * be required to verify their email address only when they sign in. */
   allowAnonymous?: boolean;
   /** The login methods that will be displayed to the user. */
   methods?: LogInMethod[];
@@ -103,7 +105,7 @@ const EmailLoginButton = createButton({
  * user to sign in (and verify their email address if required).
  *
  * Components inside this wrapper can access user data and other controls via the
- * {@link useUser} hook. */
+ * {@link useAuth} hook. */
 export function FirebaseLogin({
   auth,
   requireVerification = true,
@@ -123,25 +125,29 @@ export function FirebaseLogin({
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [tokenResult, setTokenResult] = useState<IdTokenResult | null>(null);
+  const [reSigningIn, setReSigningIn] = useState(false);
   const [linking, setLinking] = useState(false);
   const [page, setPage] = useState<'home' | 'email'>('home');
   const [loading, setLoading] = useState(false);
 
-  const signInAndLink = useCallback(() => {
+  const signIn = useCallback((link: boolean = false) => {
     if (!user) {
-      setError('Something is broken');
+      setError('Something is broken: re-signing in without a current user');
       return;
     }
-    setLinking(true);
+    setError(null);
+    setLinking(link);
+    setReSigningIn(true);
   }, [user]);
 
-  const cancelLinking = useCallback(() => {
+  const cancelReSigningIn = useCallback(() => {
+    setReSigningIn(false);
     setLinking(false);
   }, []);
 
   const sendVerification = useCallback(async (user: User) => {
     if (!user) {
-      setError('Something is broken');
+      setError('Something is broken: can\'t send verification email without a user');
       return;
     }
     setSending(true);
@@ -157,13 +163,14 @@ export function FirebaseLogin({
   }, []);
 
   const handleUserCredential = useCallback(async (credential: UserCredential) => {
-    setLinking(false);
     if (requireVerification) {
       const additionalInfo = getAdditionalUserInfo(credential);
       if (additionalInfo?.isNewUser && !credential.user.emailVerified) {
         await sendVerification(credential.user);
       }
     }
+    setReSigningIn(false);
+    setLinking(false);
   }, [requireVerification, sendVerification]);
 
   const authStateHandler = useCallback(async (user: User | null) => {
@@ -235,29 +242,43 @@ export function FirebaseLogin({
   }, []);
 
   useEffect(() => {
-    const go = async () => {
+    (async () => {
+      // When signing in with popup, you just await the sign-in function and it
+      // either resolves or throws an error. With a redirect, you lose all the
+      // page state, so then you call getRedirectResult(), which succeeds or
+      // fails pretty much like the popup sign-in functions (or resolves to
+      // null if there was no redirect).
       try {
+        console.log('Checking for redirect result...');
         const result = await getRedirectResult(authInstance);
+        console.log('Got redirect result', result);
         if (result) {
+          localStorage.removeItem('aldel-react-firebase-login-redirect');
           await handleUserCredential(result);
         }
       } catch (err) {
+        console.error('Error getting redirect result:', err);
         setFirebaseError(err as FirebaseError);
+        const stored = localStorage.getItem('aldel-react-firebase-login-redirect');
+        const [wasReSigningIn, wasLinking] = JSON.parse(stored || '[false, false]');
+        localStorage.removeItem('aldel-react-firebase-login-redirect');
+        setReSigningIn(wasReSigningIn);
+        setLinking(wasLinking);
       }
-    };
-    go();
+    })();
   }, [authInstance, setFirebaseError, handleUserCredential]);
 
-  const signIn = useCallback(
+  const doSignIn = useCallback(
     async (provider: AuthProvider) => {
+      setError(null);
       setLoading(true);
       try {
         if (popup) {
           const getCredential = () => {
-            if (user) {
-              // User is already authenticated (possibly anonymously), so we want
-              // to link a new provider to the user account. Most commonly this
-              // means upgrading an anonymous account to a named account.
+            if (user && linking) {
+              // User is already authenticated (possibly anonymously), and we
+              // want to link a new provider to the user account. Most commonly
+              // this means upgrading an anonymous account to a named account.
               return linkWithPopup(user, provider);
             }
             return signInWithPopup(authInstance, provider);
@@ -265,7 +286,9 @@ export function FirebaseLogin({
           const credential = await getCredential();
           await handleUserCredential(credential);
         } else {
-          if (user) {
+          // Save state for after redirect and getRedirectResult... ugh
+          localStorage.setItem('aldel-react-firebase-login-redirect', JSON.stringify([reSigningIn, linking]));
+          if (user && linking) {
             // User is already authenticated, etc.
             linkWithRedirect(user, provider);
           } else {
@@ -278,13 +301,13 @@ export function FirebaseLogin({
         setLoading(false);
       }
     },
-    [authInstance, popup, setFirebaseError, user, handleUserCredential],
+    [popup, handleUserCredential, user, linking, authInstance, reSigningIn, setFirebaseError],
   );
 
   const methodMap = {
     apple: (
       <AppleLoginButton
-        onClick={() => signIn(new OAuthProvider('apple.com'))}
+        onClick={() => doSignIn(new OAuthProvider('apple.com'))}
         disabled={loading}
         key="apple"
       >
@@ -293,7 +316,7 @@ export function FirebaseLogin({
     ),
     facebook: (
       <FacebookLoginButton
-        onClick={() => signIn(new FacebookAuthProvider())}
+        onClick={() => doSignIn(new FacebookAuthProvider())}
         disabled={loading}
         key="facebook"
       >
@@ -302,7 +325,7 @@ export function FirebaseLogin({
     ),
     github: (
       <GithubLoginButton
-        onClick={() => signIn(new GithubAuthProvider())}
+        onClick={() => doSignIn(new GithubAuthProvider())}
         disabled={loading}
         key="github"
       >
@@ -311,7 +334,7 @@ export function FirebaseLogin({
     ),
     google: (
       <GoogleLoginButton
-        onClick={() => signIn(new GoogleAuthProvider())}
+        onClick={() => doSignIn(new GoogleAuthProvider())}
         disabled={loading}
         key="google"
       >
@@ -320,7 +343,7 @@ export function FirebaseLogin({
     ),
     microsoft: (
       <MicrosoftLoginButton
-        onClick={() => signIn(new OAuthProvider('microsoft.com'))}
+        onClick={() => doSignIn(new OAuthProvider('microsoft.com'))}
         disabled={loading}
         key="microsoft"
       >
@@ -329,7 +352,7 @@ export function FirebaseLogin({
     ),
     twitter : (
       <XLoginButton
-        onClick={() => signIn(new TwitterAuthProvider())}
+        onClick={() => doSignIn(new TwitterAuthProvider())}
         disabled={loading}
         key="twitter"
       >
@@ -338,7 +361,7 @@ export function FirebaseLogin({
     ),
     yahoo: (
       <YahooLoginButton
-        onClick={() => signIn(new OAuthProvider('yahoo.com'))}
+        onClick={() => doSignIn(new OAuthProvider('yahoo.com'))}
         disabled={loading}
         key="yahoo"
       >
@@ -347,7 +370,10 @@ export function FirebaseLogin({
     ),
     email: (
       <EmailLoginButton
-        onClick={() => setPage('email')}
+        onClick={() => {
+          setError(null);
+          setPage('email');
+        }}
         disabled={loading}
         key="email"
       />
@@ -360,6 +386,7 @@ export function FirebaseLogin({
         auth={authInstance}
         onClose={() => setPage('home')}
         handleUserCredential={handleUserCredential}
+        linking={linking}
       />;
     }
 
@@ -369,7 +396,7 @@ export function FirebaseLogin({
         className="react-firebase-login-ui-container"
       >
         {(methods || ['google']).map((method) => methodMap[method])}
-        {error && <div style={{ color: 'red' }}>Error: {error}</div>}
+        {error && <p style={{ color: 'red', textAlign: 'center' }}>Error: {error}</p>}
       </div>
     );
   };
@@ -387,7 +414,7 @@ export function FirebaseLogin({
         }}
       >
         {header}
-        { linking && (
+        { reSigningIn && (
           <button
             className="react-firebase-login-cancel-linking-button"
             style={{
@@ -397,7 +424,7 @@ export function FirebaseLogin({
               backgroundColor: 'transparent', color: '#447',
               margin: 0, padding: 2,
             }}
-            onClick={cancelLinking}
+            onClick={cancelReSigningIn}
           >
             🗙
           </button>
@@ -440,13 +467,13 @@ export function FirebaseLogin({
         >
           Resend email
         </button>
-        <LogOutButton />
+        <LogoutButton />
         {error && <div style={{ color: 'red' }}>Error: {error}</div>}
       </div>
     );
   }
 
-  if (linking) {
+  if (reSigningIn) {
     return wrapped(renderLoginContent());
   }
 
@@ -457,8 +484,8 @@ export function FirebaseLogin({
   const claims = tokenResult.claims;
 
   return (
-    <UserContext.Provider value={{ user, claims, signInAndLink }}>
+    <AuthContext.Provider value={{ user, claims, signIn }}>
       {children}
-    </UserContext.Provider>
+    </AuthContext.Provider>
   );
 }

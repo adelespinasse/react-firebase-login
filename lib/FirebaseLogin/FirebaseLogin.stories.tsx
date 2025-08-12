@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { FirebaseLogin } from './FirebaseLogin';
-import { useUser } from './useUser';
-import { LogOutButton } from '../LogOutButton';
+import { useAuth } from './useAuth';
+import { LogoutButton } from '../LogoutButton';
 import { fullPageFrame } from '../frames';
 
 const meta = {
@@ -17,12 +17,12 @@ export default meta;
 type Story = StoryObj<typeof FirebaseLogin>;
 
 function UserProfile() {
-  const { user } = useUser();
+  const { user } = useAuth();
   return (
     <div style={{ textAlign: 'center' }}>
       <h2>Welcome, {user.email || 'User'}!</h2>
       <p>UID: {user.uid}</p>
-      <LogOutButton />
+      <LogoutButton />
     </div>
   );
 }
@@ -74,11 +74,11 @@ export const WithFullPageFrame: Story = {
 };
 
 function AnonymousChildren() {
-  const { user, signInAndLink } = useUser();
+  const { user, signIn } = useAuth();
   return <div style={{ textAlign: 'center' }}>
     <h2>User: { user.email || 'anonymous' }</h2>
     <p>UID: { user.uid }</p>
-    { user.email ? <h3>Signed in</h3> : <button onClick={signInAndLink}>Sign in</button> }
+    { user.email ? <h3>Signed in</h3> : <button onClick={signIn}>Sign in</button> }
   </div>
 }
 

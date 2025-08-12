@@ -35,9 +35,10 @@ export type LogInUIProps = {
   auth?: Auth;
   onClose: () => void;
   handleUserCredential?: (credential: UserCredential) => Promise<void>;
+  linking: boolean;
 };
 
-export function EmailLogInUI({ auth, onClose, handleUserCredential }: LogInUIProps) {
+export function EmailLogInUI({ auth, onClose, handleUserCredential, linking }: LogInUIProps) {
   const authInstance = auth || getAuth();
   const [loginState, setLoginState] = useState<'signin' | 'create' | 'forgot' | 'sent'>(
     authInstance.currentUser ?  'create' : 'signin',
@@ -147,7 +148,7 @@ export function EmailLogInUI({ auth, onClose, handleUserCredential }: LogInUIPro
               setLoading(true);
               try {
                 const userCredential = await (async () => {
-                  if (authInstance.currentUser) {
+                  if (authInstance.currentUser && linking) {
                     const credential = EmailAuthProvider.credential(email, password);
                     return linkWithCredential(authInstance.currentUser, credential);
                   }

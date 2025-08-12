@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 
-import { LogOutButton, FirebaseLogin, useUser, fullPageFrame } from '../../lib';
+import { LogoutButton, FirebaseLogin, useAuth, fullPageFrame } from '../../lib';
 
 import { firebaseConfig } from './firebaseConfig';
 import './main.css';
@@ -13,7 +13,7 @@ if (import.meta.env.DEV) {
 }
 
 function InnerContent() {
-  const { user, claims } = useUser();
+  const { user, claims } = useAuth();
   return (
     <div className="inner-content">
       <p>
@@ -23,7 +23,7 @@ function InnerContent() {
       <pre style={{ maxWidth: '800px', overflow: 'auto', border: '1px solid #ccc', padding: '10px', borderRadius: '5px' }}>{JSON.stringify(user, null, 2)}</pre>
       Claims:
       <pre style={{ maxWidth: '800px', overflow: 'auto', border: '1px solid #ccc', padding: '10px', borderRadius: '5px' }}>{JSON.stringify(claims, null, 2)}</pre>
-      <LogOutButton />
+      <LogoutButton />
     </div>
   );
 }
