@@ -139,7 +139,7 @@ export function FirebaseLogin({
     setLinking(false);
   }, []);
 
-  const sendVerification = useCallback(async () => {
+  const sendVerification = useCallback(async (user: User) => {
     if (!user) {
       setError('Something is broken');
       return;
@@ -154,14 +154,14 @@ export function FirebaseLogin({
     } finally {
       setSending(false);
     }
-  }, [user]);
+  }, []);
 
   const handleUserCredential = useCallback(async (credential: UserCredential) => {
     setLinking(false);
     if (requireVerification) {
       const additionalInfo = getAdditionalUserInfo(credential);
       if (additionalInfo?.isNewUser && !credential.user.emailVerified) {
-        await sendVerification();
+        await sendVerification(credential.user);
       }
     }
   }, [requireVerification, sendVerification]);
@@ -431,11 +431,12 @@ export function FirebaseLogin({
           A verification link has been sent to {user.email}. Click the provided link,
           then{' '}
           <a onClick={() => reload(user)}>
-            click here.
+            click here
           </a>
+          {' '}to continue.
         </p>
         <button
-          onClick={sendVerification}
+          onClick={() => sendVerification(user)}
         >
           Resend email
         </button>
