@@ -41,7 +41,7 @@
   },
   "scripts": {
     "dev": "firebase emulators:start --only auth,ui & storybook dev -p 6006",
-    "demo": "vite --config vite.config.demo.ts",
+    "demo": "firebase emulators:start --only auth,ui & vite --config vite.config.demo.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "storybook build",
@@ -51,9 +51,14 @@
     "format": "prettier . --write --ignore-unknown",
     "prepack": "npm run build:lib",
     "prepare": "echo DISABLED husky install",
-    "prepublishOnly": "echo DISABLED npm run build"
+    "prepublishOnly": "echo DISABLED npm run build",
+    "run-test-app": "firebase emulators:exec --only auth,ui ./run-test-app.sh",
+    "test-pw": "npx firebase-tools emulators:exec --only auth ./run-playwright-tests.sh",
+    "test-pw-ui": "firebase emulators:exec --only auth,ui ./run-playwright-tests-ui.sh",
+    "test-report": "playwright show-report"
   },
   "devDependencies": {
+    "@playwright/experimental-ct-react": "^1.54.2",
     "@storybook/addon-actions": "^8.5.3",
     "@storybook/addon-essentials": "^8.6.14",
     "@storybook/blocks": "^8.5.3",

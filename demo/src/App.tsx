@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
 
 import { LogOutButton, FirebaseLogin, useUser, fullPageFrame } from '../../lib';
 
@@ -6,6 +7,10 @@ import { firebaseConfig } from './firebaseConfig';
 import './main.css';
 
 initializeApp(firebaseConfig);
+
+if (import.meta.env.DEV) {
+  connectAuthEmulator(getAuth(), 'http://localhost:9099');
+}
 
 function InnerContent() {
   const { user, claims } = useUser();
@@ -31,7 +36,6 @@ function App() {
         'twitter', 'yahoo', 'github', 'email',
       ]}
       requireVerification
-      popup
       header={<h1>Demo App</h1>}
       frame={fullPageFrame}
     >
