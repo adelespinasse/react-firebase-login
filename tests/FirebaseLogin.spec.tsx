@@ -165,7 +165,7 @@ test.describe('Login-logout with email', () => {
     const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
     expect(response.ok).toBeTruthy();
     const data = await response.json();
-    const code = data.oobCodes.find((code: any) => code.email === email);
+    const code = data.oobCodes.find((code) => code.email === email);
     expect(code).toBeDefined();
     const verifyResponse = await fetch(code.oobLink);
     expect(verifyResponse.ok).toBeTruthy();
@@ -195,7 +195,7 @@ test.describe('Login-logout with email', () => {
     const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
     expect(response.ok).toBeTruthy();
     const data = await response.json();
-    const codes = data.oobCodes.filter((code: any) => code.email === email);
+    const codes = data.oobCodes.filter((code) => code.email === email);
     expect(codes.length).toBe(2);
   });
 });
