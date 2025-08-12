@@ -30,131 +30,70 @@ async function gotoTestApp({
   await page.goto(`http://localhost:5173/?${params.toString()}`);
 }
 
-test.describe('FirebaseLogin E2E Tests', () => {
-  test('Log in and out with Google', async ({ page }) => {
-    await gotoTestApp({ page, methods: ['google', 'facebook'] });
-    await expect(page.locator('body')).toContainText('Firebase Login Test');
-    await expect(page.locator('body')).toContainText('login test footer');
-    await page.getByRole('button', { name: 'Sign in with Google' }).click();
-    await expect(page.locator('body')).toContainText('Sign-in with Google.com');
-    await page.getByRole('button', { name: 'Add new account' }).click();
-    await page.getByLabel('Email').fill('username1@domain.tld');
-    await page.getByLabel('Display name').fill('User Name');
-    await page.getByRole('button', { name: 'Sign in with Google.com' }).click();
-    await expect(page.locator('body')).toContainText('Logged in as username1@domain.tld');
-    await expect(page.locator('body')).toContainText('"displayName": "User Name"');
-    await expect(page.locator('body')).toContainText('"emailVerified": true');
-    await expect(page.locator('body')).toContainText('"providerId": "google.com"');
-    await page.getByRole('button', { name: 'Sign Out' }).click();
-    await expect(page.locator('body')).toContainText('Firebase Login Test');
-  });
+type ProviderLabels = { method: LogInMethod; providerName: string; buttonName: string };
 
-  test('Log in and out with Facebook', async ({ page }) => {
-    await gotoTestApp({ page, methods: ['google', 'facebook', 'email'] });
-    await expect(page.locator('body')).toContainText('Firebase Login Test');
-    await expect(page.locator('body')).toContainText('login test footer');
-    await page.getByRole('button', { name: 'Sign in with Facebook' }).click();
-    await expect(page.locator('body')).toContainText('Sign-in with Facebook.com');
-    await page.getByRole('button', { name: 'Add new account' }).click();
-    await page.getByLabel('Email').fill('username2@domain.tld');
-    await page.getByLabel('Display name').fill('User Name');
-    await page.getByRole('button', { name: 'Sign in with Facebook.com' }).click();
-    await expect(page.locator('body')).toContainText('Logged in as username2@domain.tld');
-    await expect(page.locator('body')).toContainText('"displayName": "User Name"');
-    await expect(page.locator('body')).toContainText('"emailVerified": true');
-    await expect(page.locator('body')).toContainText('"providerId": "facebook.com"');
-    await page.getByRole('button', { name: 'Sign Out' }).click();
-    await expect(page.locator('body')).toContainText('Firebase Login Test');
-  });
+const providerLabels: ProviderLabels[] = [
+  { method: 'google', providerName: 'Google', buttonName: 'Google' },
+  { method: 'facebook', providerName: 'Facebook', buttonName: 'Facebook' },
+  { method: 'github', providerName: 'Github', buttonName: 'GitHub' },
+  { method: 'twitter', providerName: 'Twitter', buttonName: 'X' },
+  { method: 'apple', providerName: 'Apple', buttonName: 'Apple' },
+  { method: 'microsoft', providerName: 'Microsoft', buttonName: 'Microsoft' },
+  { method: 'yahoo', providerName: 'Yahoo', buttonName: 'Yahoo' },
+];
 
-  test('Log in and out with GitHub', async ({ page }) => {
-    await gotoTestApp({ page, methods: ['google', 'github', 'email'] });
-    await expect(page.locator('body')).toContainText('Firebase Login Test');
-    await expect(page.locator('body')).toContainText('login test footer');
-    await page.getByRole('button', { name: 'Sign in with Github' }).click();
-    await expect(page.locator('body')).toContainText('Sign-in with Github.com');
-    await page.getByRole('button', { name: 'Add new account' }).click();
-    await page.getByLabel('Email').fill('username3@domain.tld');
-    await page.getByLabel('Display name').fill('User Name');
-    await page.getByRole('button', { name: 'Sign in with Github.com' }).click();
-    await expect(page.locator('body')).toContainText('Logged in as username3@domain.tld');
-    await expect(page.locator('body')).toContainText('"displayName": "User Name"');
-    await expect(page.locator('body')).toContainText('"emailVerified": true');
-    await expect(page.locator('body')).toContainText('"providerId": "github.com"');
-    await page.getByRole('button', { name: 'Sign Out' }).click();
-    await expect(page.locator('body')).toContainText('Firebase Login Test');
-  });
+test.describe('SSO login-logout w redirect', () => {
+  const testProvider = ({ method, buttonName }: ProviderLabels) => {
+    test(`using ${method}`, async ({ page }) => {
+      const email = `${method}user1@domain.tld`;
+      await gotoTestApp({ page, methods: [method, 'email'] });
+      await expect(page.locator('body')).toContainText('Firebase Login Test');
+      await expect(page.locator('body')).toContainText('login test footer');
+      await page.getByRole('button', { name: `Sign in with ${buttonName}` }).click();
+      await expect(page.locator('body')).toContainText(`Sign-in with ${method}.com`, { ignoreCase: true });
+      await page.getByRole('button', { name: 'Add new account' }).click();
+      await page.getByLabel('Email').fill(email);
+      await page.getByLabel('Display name').fill('User Name');
+      await page.getByRole('button', { name: `Sign in with ${method}.com` }).click();
+      await expect(page.locator('body')).toContainText(`Logged in as ${email}`);
+      await expect(page.locator('body')).toContainText('"displayName": "User Name"');
+      await expect(page.locator('body')).toContainText('"emailVerified": true');
+      await expect(page.locator('body')).toContainText(`"providerId": "${method}.com"`);
+      await page.getByRole('button', { name: 'Sign Out' }).click();
+      await expect(page.locator('body')).toContainText('Firebase Login Test');
+    });
+  };
 
-  test('Log in and out with Twitter', async ({ page }) => {
-    await gotoTestApp({ page, methods: ['google', 'twitter', 'email'] });
-    await expect(page.locator('body')).toContainText('Firebase Login Test');
-    await expect(page.locator('body')).toContainText('login test footer');
-    await page.getByRole('button', { name: 'Sign in with X' }).click();
-    await expect(page.locator('body')).toContainText('Sign-in with Twitter.com');
-    await page.getByRole('button', { name: 'Add new account' }).click();
-    await page.getByLabel('Email').fill('username4@domain.tld');
-    await page.getByLabel('Display name').fill('User Name');
-    await page.getByRole('button', { name: 'Sign in with Twitter.com' }).click();
-    await expect(page.locator('body')).toContainText('Logged in as username4@domain.tld');
-    await expect(page.locator('body')).toContainText('"displayName": "User Name"');
-    await expect(page.locator('body')).toContainText('"emailVerified": true');
-    await expect(page.locator('body')).toContainText('"providerId": "twitter.com"');
-    await page.getByRole('button', { name: 'Sign Out' }).click();
-    await expect(page.locator('body')).toContainText('Firebase Login Test');
-  });
+  for (const provider of providerLabels) {
+    testProvider(provider);
+  }
+});
 
-  test('Log in and out with Apple', async ({ page }) => {
-    await gotoTestApp({ page, methods: ['google', 'apple', 'email'] });
-    await expect(page.locator('body')).toContainText('Firebase Login Test');
-    await expect(page.locator('body')).toContainText('login test footer');
-    await page.getByRole('button', { name: 'Sign in with Apple' }).click();
-    await expect(page.locator('body')).toContainText('Sign-in with Apple.com');
-    await page.getByRole('button', { name: 'Add new account' }).click();
-    await page.getByLabel('Email').fill('username5@domain.tld');
-    await page.getByLabel('Display name').fill('User Name');
-    await page.getByRole('button', { name: 'Sign in with Apple.com' }).click();
-    await expect(page.locator('body')).toContainText('Logged in as username5@domain.tld');
-    await expect(page.locator('body')).toContainText('"displayName": "User Name"');
-    await expect(page.locator('body')).toContainText('"emailVerified": true');
-    await expect(page.locator('body')).toContainText('"providerId": "apple.com"');
-    await page.getByRole('button', { name: 'Sign Out' }).click();
-    await expect(page.locator('body')).toContainText('Firebase Login Test');
-  });
+test.describe('SSO login-logout w popup', () => {
+  const testProvider = ({ method, buttonName }: ProviderLabels) => {
+    test(`using ${method}`, async ({ page }) => {
+      const email = `${method}user2@domain.tld`;
+      await gotoTestApp({ page, methods: [method, 'email'], popup: true });
+      await expect(page.locator('body')).toContainText('Firebase Login Test');
+      await expect(page.locator('body')).toContainText('login test footer');
+      const page1Promise = page.waitForEvent('popup');
+      await page.getByRole('button', { name: `Sign in with ${buttonName}` }).click();
+      const page1 = await page1Promise;
+      await expect(page1.locator('body')).toContainText(`Sign-in with ${method}.com`, { ignoreCase: true });
+      await page1.getByRole('button', { name: 'Add new account' }).click();
+      await page1.getByLabel('Email').fill(email);
+      await page1.getByLabel('Display name').fill('User Name');
+      await page1.getByRole('button', { name: `Sign in with ${method}.com` }).click();
+      await expect(page.locator('body')).toContainText(`Logged in as ${email}`);
+      await expect(page.locator('body')).toContainText('"displayName": "User Name"');
+      await expect(page.locator('body')).toContainText('"emailVerified": true');
+      await expect(page.locator('body')).toContainText(`"providerId": "${method}.com"`);
+      await page.getByRole('button', { name: 'Sign Out' }).click();
+      await expect(page.locator('body')).toContainText('Firebase Login Test');
+    });
+  };
 
-  test('Log in and out with Microsoft', async ({ page }) => {
-    await gotoTestApp({ page, methods: ['google', 'microsoft', 'email'] });
-    await expect(page.locator('body')).toContainText('Firebase Login Test');
-    await expect(page.locator('body')).toContainText('login test footer');
-    await page.getByRole('button', { name: 'Sign in with Microsoft' }).click();
-    await expect(page.locator('body')).toContainText('Sign-in with Microsoft.com');
-    await page.getByRole('button', { name: 'Add new account' }).click();
-    await page.getByLabel('Email').fill('username6@domain.tld');
-    await page.getByLabel('Display name').fill('User Name');
-    await page.getByRole('button', { name: 'Sign in with Microsoft.com' }).click();
-    await expect(page.locator('body')).toContainText('Logged in as username6@domain.tld');
-    await expect(page.locator('body')).toContainText('"displayName": "User Name"');
-    await expect(page.locator('body')).toContainText('"emailVerified": true');
-    await expect(page.locator('body')).toContainText('"providerId": "microsoft.com"');
-    await page.getByRole('button', { name: 'Sign Out' }).click();
-    await expect(page.locator('body')).toContainText('Firebase Login Test');
-  });
-
-  test('Log in and out with Yahoo', async ({ page }) => {
-    await gotoTestApp({ page, methods: ['google', 'yahoo', 'email'] });
-    await expect(page.locator('body')).toContainText('Firebase Login Test');
-    await expect(page.locator('body')).toContainText('login test footer');
-    await page.getByRole('button', { name: 'Sign in with Yahoo' }).click();
-    await expect(page.locator('body')).toContainText('Sign-in with Yahoo.com');
-    await page.getByRole('button', { name: 'Add new account' }).click();
-    await page.getByLabel('Email').fill('username7@domain.tld');
-    await page.getByLabel('Display name').fill('User Name');
-    await page.getByRole('button', { name: 'Sign in with Yahoo.com' }).click();
-    await expect(page.locator('body')).toContainText('Logged in as username7@domain.tld');
-    await expect(page.locator('body')).toContainText('"displayName": "User Name"');
-    await expect(page.locator('body')).toContainText('"emailVerified": true');
-    await expect(page.locator('body')).toContainText('"providerId": "yahoo.com"');
-    await page.getByRole('button', { name: 'Sign Out' }).click();
-    await expect(page.locator('body')).toContainText('Firebase Login Test');
-  });
-
+  for (const provider of providerLabels) {
+    testProvider(provider);
+  }
 });
