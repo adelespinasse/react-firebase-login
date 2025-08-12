@@ -176,4 +176,26 @@ test.describe('Login-logout with email', () => {
     await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
   });
 
+  test('resend verification email', async ({ page }) => {
+    const email = uniqueEmail();
+    await gotoTestApp({ page, methods: ['email', 'google'], requireVerification: true });
+    await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
+    await expect(page.locator('#root')).toContainText('Sign in with Google');
+    await page.getByRole('button', { name: '📧 Sign in with Email' }).click();
+    await page.getByText('Create one').click();
+    await page.getByRole('textbox', { name: 'Email' }).fill(email);
+    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('q1w2e3r4t5');
+    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('q1w2e3r4t5');
+    await page.getByRole('button', { name: 'Create Account' }).click();
+    await expect(page.locator('#root')).toContainText(`A verification link has been sent to ${email}`);
+    await expect(page.locator('#root')).not.toContainText('error', { ignoreCase: true });
+    await page.getByRole('button', { name: 'Resend email' }).click();
+
+    // Make sure the "email" was "sent" twice.
+    const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
+    expect(response.ok).toBeTruthy();
+    const data = await response.json();
+    const codes = data.oobCodes.filter((code: any) => code.email === email);
+    expect(codes.length).toBe(2);
+  });
 });
