@@ -150,7 +150,7 @@ test.describe('FirebaseLogin E2E Tests', () => {
     await page.getByLabel('Email').fill('username7@domain.tld');
     await page.getByLabel('Display name').fill('User Name');
     await page.getByRole('button', { name: 'Sign in with Yahoo.com' }).click();
-    await expect(page.locator('body')).toContainText('Logged in as username72@domain.tld');
+    await expect(page.locator('body')).toContainText('Logged in as username7@domain.tld');
     await expect(page.locator('body')).toContainText('"displayName": "User Name"');
     await expect(page.locator('body')).toContainText('"emailVerified": true');
     await expect(page.locator('body')).toContainText('"providerId": "yahoo.com"');
