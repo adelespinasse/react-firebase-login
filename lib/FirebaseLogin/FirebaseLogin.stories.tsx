@@ -78,7 +78,7 @@ function AnonymousChildren() {
   return <div style={{ textAlign: 'center' }}>
     <h2>User: { user.email || 'anonymous' }</h2>
     <p>UID: { user.uid }</p>
-    { user.email ? <h3>Signed in</h3> : <button onClick={signIn}>Sign in</button> }
+    { user.email ? <h3>Signed in</h3> : <button onClick={() => signIn()}>Sign in</button> }
   </div>
 }
 

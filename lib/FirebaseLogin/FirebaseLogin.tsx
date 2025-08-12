@@ -249,9 +249,7 @@ export function FirebaseLogin({
       // fails pretty much like the popup sign-in functions (or resolves to
       // null if there was no redirect).
       try {
-        console.log('Checking for redirect result...');
         const result = await getRedirectResult(authInstance);
-        console.log('Got redirect result', result);
         if (result) {
           localStorage.removeItem('aldel-react-firebase-login-redirect');
           await handleUserCredential(result);
