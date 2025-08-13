@@ -1,2 +1,2 @@
 export * from './FirebaseLogin';
-export * from './useUser';
+export * from './useAuth';

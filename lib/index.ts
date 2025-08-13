@@ -1,3 +1,3 @@
 export * from './FirebaseLogin';
-export * from './LogOutButton';
+export * from './LogoutButton';
 export * from './frames';
