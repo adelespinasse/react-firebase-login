@@ -39,6 +39,19 @@ function uniqueEmail() {
   return `${crypto.randomUUID()}@domain.tld`;
 }
 
+// Sometimes nothing happens when the test clicks on the "Add new account"
+// button in the Firebase Auth emulator's simulated SSO provider page. No idea
+// why. This retries it several times until the email input appears.
+async function clickAddNewAccount(page: Page) {
+  for (const timeout of [500, 200, 300, 400, 500, 1000, 1500]) {
+    await page.getByRole('button', { name: 'Add new account' }).click();
+    const emailInput = await page.getByLabel('Email');
+    if (await emailInput.isVisible({ timeout })) {
+      return;
+    }
+  }
+}
+
 type ProviderLabels = { method: LogInMethod; providerName: string; buttonName: string };
 
 const providerLabels: ProviderLabels[] = [
@@ -60,7 +73,7 @@ test.describe('SSO login-out w redirect', () => {
       await expect(page.locator('body')).toContainText('login test footer');
       await page.getByRole('button', { name: `Sign in with ${buttonName}` }).click();
       await expect(page.locator('body')).toContainText(`Sign-in with ${method}.com`, { ignoreCase: true });
-      await page.getByRole('button', { name: 'Add new account' }).click();
+      await clickAddNewAccount(page);
       await page.getByLabel('Email').fill(email);
       await page.getByLabel('Display name').fill('User Name');
       await page.getByRole('button', { name: `Sign in with ${method}.com` }).click();
@@ -89,7 +102,7 @@ test.describe('SSO login-out w popup', () => {
       await page.getByRole('button', { name: `Sign in with ${buttonName}` }).click();
       const page1 = await page1Promise;
       await expect(page1.locator('body')).toContainText(`Sign-in with ${method}.com`, { ignoreCase: true });
-      await page1.getByRole('button', { name: 'Add new account' }).click();
+      await clickAddNewAccount(page1);
       await page1.getByLabel('Email').fill(email);
       await page1.getByLabel('Display name').fill('User Name');
       await page1.getByRole('button', { name: `Sign in with ${method}.com` }).click();
@@ -213,7 +226,7 @@ test.describe('Anonymous auth', () => {
     const anonUid = await page.locator('#uid').innerText();
     await page.getByRole('button', { name: 'Sign in' }).click();
     await page.getByRole('button', { name: 'Sign in with Google' }).click();
-    await page.getByRole('button', { name: 'Add new account' }).click();
+    await clickAddNewAccount(page);
     await page.getByLabel('Email').fill(email);
     await page.getByLabel('Display name').fill('User Name');
     await page.getByRole('button', { name: 'Sign in with Google.com' }).click();
@@ -228,7 +241,7 @@ test.describe('Anonymous auth', () => {
     const anonUid = await page.locator('#uid').innerText();
     await page.getByRole('button', { name: 'Sign in' }).click();
     await page.getByRole('button', { name: 'Sign in with Google' }).click();
-    await page.getByRole('button', { name: 'Add new account' }).click();
+    await clickAddNewAccount(page);
     await page.getByLabel('Email').fill(email);
     await page.getByLabel('Display name').fill('User Name');
     await page.getByRole('button', { name: 'Sign in with Google.com' }).click();
@@ -237,5 +250,48 @@ test.describe('Anonymous auth', () => {
     await page.getByRole('button', { name: 'Sign Out' }).click();
     // After signing out, a new anonymous user is created
     await expect(page.locator('#uid')).not.toContainText(anonUid);
+  });
+
+  test('Anonymous then email, no linking', async ({ page }) => {
+    const email = uniqueEmail();
+    await gotoTestApp({ page, methods: ['google', 'email'], allowAnonymous: true });
+    await expect(page.locator('#root')).toContainText('Logged in as Anonymous User');
+    const anonUid = await page.locator('#uid').innerText();
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: '📧 Sign in with Email' }).click();
+    // From anonymous, email sign-in goes directly to account creation
+    // await page.getByText('Create one').click();
+    await page.getByRole('textbox', { name: 'Email' }).fill(email);
+    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('q1w2e3r4t5');
+    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('q1w2e3r4t5');
+    await page.getByRole('button', { name: 'Create Account' }).click();
+    await expect(page.locator('#root')).toContainText(`Logged in as ${email}`);
+    await expect(page.locator('#uid')).not.toContainText(anonUid);
+  });
+
+  test('Anonymous then email, with linking', async ({ page }) => {
+    const email = uniqueEmail();
+    await gotoTestApp({ page, methods: ['google', 'email'], allowAnonymous: true, link: true });
+    await expect(page.locator('#root')).toContainText('Logged in as Anonymous User');
+    const anonUid = await page.locator('#uid').innerText();
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: '📧 Sign in with Email' }).click();
+    // From anonymous, email sign-in goes directly to account creation
+    // await page.getByText('Create one').click();
+    await page.getByRole('textbox', { name: 'Email' }).fill(email);
+    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('q1w2e3r4t5');
+    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('q1w2e3r4t5');
+    await page.getByRole('button', { name: 'Create Account' }).click();
+    await expect(page.locator('#root')).toContainText(`Logged in as ${email}`);
+    await expect(page.locator('#uid')).toContainText(anonUid);
+  });
+
+  test('Anonymous, start sign in, then cancel', async ({ page }) => {
+    await gotoTestApp({ page, allowAnonymous: true });
+    await expect(page.locator('#root')).toContainText('Logged in as Anonymous User');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.locator('#root')).toContainText('Sign in with Google');
+    await page.getByRole('button', { name: '🗙' }).click();
+    await expect(page.locator('#root')).toContainText('Logged in as Anonymous User');
   });
 });
