@@ -220,6 +220,20 @@ test.describe('Login-logout with email', () => {
     const codes = data.oobCodes.filter((code) => code.email === email);
     expect(codes.length).toBe(2);
   });
+
+  test('show only email if only email method', async ({ page }) => {
+    const email = uniqueEmail();
+    await gotoTestApp({ page, methods: ['email'] });
+    await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
+    await expect(page.getByRole('textbox', { name: 'Email' })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
+    await page.getByText('Create one').click();
+    await page.getByRole('textbox', { name: 'Email' }).fill(email);
+    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('q1w2e3r4t5');
+    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('q1w2e3r4t5');
+    await page.getByRole('button', { name: 'Create Account' }).click();
+    await expect(page.locator('#root')).toContainText(`Logged in as ${email}`);
+  });
 });
 
 test.describe('Anonymous auth', () => {
@@ -297,5 +311,36 @@ test.describe('Anonymous auth', () => {
     await expect(page.locator('#root')).toContainText('Sign in with Google');
     await page.getByRole('button', { name: '🗙' }).click();
     await expect(page.locator('#root')).toContainText('Logged in as Anonymous User');
+  });
+
+  test('Anonymous then email, verification required', async ({ page }) => {
+    const email = uniqueEmail();
+    await gotoTestApp({ page, methods: ['email', 'google'], requireVerification: true, allowAnonymous: true });
+    await expect(page.locator('#root')).toContainText('Logged in as Anonymous User');
+    const anonUid = await page.locator('#uid').innerText();
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: '📧 Sign in with Email' }).click();
+    // From anonymous, email sign-in goes directly to account creation
+    // await page.getByText('Create one').click();
+    await page.getByRole('textbox', { name: 'Email' }).fill(email);
+    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('q1w2e3r4t5');
+    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('q1w2e3r4t5');
+    await page.getByRole('button', { name: 'Create Account' }).click();
+    await expect(page.locator('#root')).toContainText(`A verification link has been sent to ${email}`);
+    await expect(page.locator('#root')).not.toContainText('error', { ignoreCase: true });
+
+    // Simulate user clicking the verification link in their email. The
+    // Firebase Emulator provides an API for things like this.
+    const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
+    expect(response.ok).toBeTruthy();
+    const data = await response.json();
+    const code = data.oobCodes.find((code) => code.email === email);
+    expect(code).toBeDefined();
+    const verifyResponse = await fetch(code.oobLink);
+    expect(verifyResponse.ok).toBeTruthy();
+
+    await page.getByText('click here').click();
+    await expect(page.locator('#root')).toContainText(`Logged in as ${email}`);
+    await expect(page.locator('#uid')).not.toContainText(anonUid);
   });
 });
