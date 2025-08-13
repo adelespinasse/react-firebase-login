@@ -26,6 +26,8 @@ import {
   type AuthProvider,
   getAdditionalUserInfo,
   type UserCredential,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
 } from 'firebase/auth';
 import { type FirebaseError } from 'firebase/app';
 import {
@@ -40,6 +42,7 @@ import {
 } from 'react-social-login-buttons';
 
 import { EmailLogInUI } from '../EmailLogInUI';
+import { EmailLinkLogInUI } from '../EmailLinkLogInUI';
 import { LogoutButton } from '../LogoutButton/LogoutButton';
 import { containerStyle, formatFirebaseError } from '../shared';
 import { type FrameFunction, noFrame } from '../frames';
@@ -47,7 +50,7 @@ import { AuthContext } from './useAuth';
 
 /** Supported login methods. */
 export type LogInMethod = 'apple' | 'facebook' | 'github' | 'google'
-  | 'microsoft' | 'twitter' | 'yahoo' | 'email';
+  | 'microsoft' | 'twitter' | 'yahoo' | 'email' | 'email_link';
 
 /** The props for the {@link FirebaseLogin} component.
  * @expand
@@ -128,7 +131,10 @@ export function FirebaseLogin({
   const [reSigningIn, setReSigningIn] = useState(false);
   const [linking, setLinking] = useState(false);
   const onlyEmail = methods?.length === 1 && methods[0] === 'email';
-  const [page, setPage] = useState<'home' | 'email'>(onlyEmail ? 'email' : 'home');
+  const onlyEmailLink = methods?.length === 1 && methods[0] === 'email_link';
+  const [page, setPage] = useState<'home' | 'email' | 'email_link'>(
+    onlyEmail ? 'email' : onlyEmailLink ? 'email_link' : 'home'
+  );
   const [loading, setLoading] = useState(false);
 
   const signIn = useCallback((link: boolean = false) => {
@@ -267,6 +273,44 @@ export function FirebaseLogin({
     })();
   }, [authInstance, setFirebaseError, handleUserCredential]);
 
+  useEffect(() => {
+    (async () => {
+      // Check if the user is completing an email link sign-in
+      if (isSignInWithEmailLink(authInstance, window.location.href)) {
+        let emailForSignIn = window.localStorage.getItem('aldel-react-firebase-login-emailForSignIn');
+        if (!emailForSignIn) {
+          // User opened the link on a different device. To avoid session fixation
+          // attacks, ask the user to provide the associated email again.
+          emailForSignIn = window.prompt('Please provide your email for confirmation');
+        }
+
+        if (emailForSignIn) {
+          setLoading(true);
+          try {
+            const result = await signInWithEmailLink(authInstance, emailForSignIn, window.location.href);
+            // Clear email from storage.
+            window.localStorage.removeItem('aldel-react-firebase-login-emailForSignIn');
+
+            await handleUserCredential(result);
+
+            // Clear the URL parameters
+            const url = new URL(window.location.href);
+            const searchParams = new URLSearchParams(window.location.search);
+            for (const param of ['mode', 'lang', 'oobCode', 'apiKey', 'link', 'continueUrl']) {
+              searchParams.delete(param);
+            }
+            url.search = searchParams.toString();
+            window.history.replaceState({}, '', url.toString());
+          } catch (error) {
+            setFirebaseError(error as FirebaseError);
+          } finally {
+            setLoading(false);
+          }
+        }
+      }
+    })();
+  }, [authInstance, handleUserCredential, setFirebaseError]);
+
   const doSignIn = useCallback(
     async (provider: AuthProvider) => {
       setError(null);
@@ -377,6 +421,16 @@ export function FirebaseLogin({
         key="email"
       />
     ),
+    email_link: (
+      <EmailLoginButton
+        onClick={() => {
+          setError(null);
+          setPage('email_link');
+        }}
+        disabled={loading}
+        key="email_link"
+      />
+    ),
   };
 
   const renderLoginContent = () => {
@@ -385,6 +439,14 @@ export function FirebaseLogin({
         auth={authInstance}
         onClose={onlyEmail ? undefined : () => setPage('home')}
         handleUserCredential={handleUserCredential}
+        linking={linking}
+      />;
+    }
+
+    if (page === 'email_link') {
+      return <EmailLinkLogInUI
+        auth={authInstance}
+        onClose={onlyEmailLink ? undefined : () => setPage('home')}
         linking={linking}
       />;
     }
