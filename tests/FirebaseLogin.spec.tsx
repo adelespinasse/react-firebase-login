@@ -220,6 +220,20 @@ test.describe('Login-logout with email', () => {
     const codes = data.oobCodes.filter((code) => code.email === email);
     expect(codes.length).toBe(2);
   });
+
+  test('show only email if only email method', async ({ page }) => {
+    const email = uniqueEmail();
+    await gotoTestApp({ page, methods: ['email'] });
+    await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
+    await expect(page.getByRole('textbox', { name: 'Email' })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
+    await page.getByText('Create one').click();
+    await page.getByRole('textbox', { name: 'Email' }).fill(email);
+    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('q1w2e3r4t5');
+    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('q1w2e3r4t5');
+    await page.getByRole('button', { name: 'Create Account' }).click();
+    await expect(page.locator('#root')).toContainText(`Logged in as ${email}`);
+  });
 });
 
 test.describe('Anonymous auth', () => {

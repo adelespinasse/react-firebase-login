@@ -33,7 +33,7 @@ const inputStyle = {
  */
 export type LogInUIProps = {
   auth?: Auth;
-  onClose: () => void;
+  onClose?: () => void;
   handleUserCredential?: (credential: UserCredential) => Promise<void>;
   linking: boolean;
 };
@@ -106,12 +106,14 @@ export function EmailLogInUI({ auth, onClose, handleUserCredential, linking }: L
               >
                 Sign In
               </button>
-              <button
-                onClick={onClose}
-                disabled={loading}
-              >
-                Cancel
-              </button>
+              { onClose && (
+                <button
+                  onClick={onClose}
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+              )}
             </div>
             <p>
               Don&apos;t have an account?{' '}
@@ -164,6 +166,7 @@ export function EmailLogInUI({ auth, onClose, handleUserCredential, linking }: L
               }
             }}
           >
+            <p>Create an account:</p>
             <input
               type="email"
               autoFocus
@@ -206,12 +209,14 @@ export function EmailLogInUI({ auth, onClose, handleUserCredential, linking }: L
               >
                 Create Account
               </button>
-              <button
-                onClick={onClose}
-                disabled={loading}
-              >
-                Cancel
-              </button>
+              { onClose && (
+                <button
+                  onClick={onClose}
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+              )}
             </div>
             <p>
               Have an account already?{' '}

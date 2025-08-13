@@ -127,7 +127,8 @@ export function FirebaseLogin({
   const [tokenResult, setTokenResult] = useState<IdTokenResult | null>(null);
   const [reSigningIn, setReSigningIn] = useState(false);
   const [linking, setLinking] = useState(false);
-  const [page, setPage] = useState<'home' | 'email'>('home');
+  const onlyEmail = methods?.length === 1 && methods[0] === 'email';
+  const [page, setPage] = useState<'home' | 'email'>(onlyEmail ? 'email' : 'home');
   const [loading, setLoading] = useState(false);
 
   const signIn = useCallback((link: boolean = false) => {
@@ -382,7 +383,7 @@ export function FirebaseLogin({
     if (page === 'email') {
       return <EmailLogInUI
         auth={authInstance}
-        onClose={() => setPage('home')}
+        onClose={onlyEmail ? undefined : () => setPage('home')}
         handleUserCredential={handleUserCredential}
         linking={linking}
       />;
