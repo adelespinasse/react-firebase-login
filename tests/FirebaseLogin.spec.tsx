@@ -7,12 +7,14 @@ async function gotoTestApp({
   requireVerification,
   allowAnonymous,
   popup,
+  link,
 }: {
   page: Page,
   methods?: LogInMethod[];
   requireVerification?: boolean;
   allowAnonymous?: boolean;
   popup?: boolean;
+  link?: boolean;
 }) {
   const params = new URLSearchParams();
   if (methods !== undefined) {
@@ -26,6 +28,9 @@ async function gotoTestApp({
   }
   if (popup !== undefined) {
     params.set('popup', JSON.stringify(popup));
+  }
+  if (link !== undefined) {
+    params.set('link', JSON.stringify(link));
   }
   await page.goto(`http://localhost:5173/?${params.toString()}`);
 }
@@ -197,5 +202,40 @@ test.describe('Login-logout with email', () => {
     const data = await response.json();
     const codes = data.oobCodes.filter((code) => code.email === email);
     expect(codes.length).toBe(2);
+  });
+});
+
+test.describe('Anonymous auth', () => {
+  test('Anonymous then google, no linking', async ({ page }) => {
+    const email = uniqueEmail();
+    await gotoTestApp({ page, allowAnonymous: true });
+    await expect(page.locator('#root')).toContainText('Logged in as Anonymous User');
+    const anonUid = await page.locator('#uid').innerText();
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: 'Sign in with Google' }).click();
+    await page.getByRole('button', { name: 'Add new account' }).click();
+    await page.getByLabel('Email').fill(email);
+    await page.getByLabel('Display name').fill('User Name');
+    await page.getByRole('button', { name: 'Sign in with Google.com' }).click();
+    await expect(page.locator('#root')).toContainText(`Logged in as ${email}`);
+    await expect(page.locator('#uid')).not.toContainText(anonUid);
+  });
+
+  test('Anonymous then google, with linking', async ({ page }) => {
+    const email = uniqueEmail();
+    await gotoTestApp({ page, allowAnonymous: true, link: true });
+    await expect(page.locator('#root')).toContainText('Logged in as Anonymous User');
+    const anonUid = await page.locator('#uid').innerText();
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: 'Sign in with Google' }).click();
+    await page.getByRole('button', { name: 'Add new account' }).click();
+    await page.getByLabel('Email').fill(email);
+    await page.getByLabel('Display name').fill('User Name');
+    await page.getByRole('button', { name: 'Sign in with Google.com' }).click();
+    await expect(page.locator('#root')).toContainText(`Logged in as ${email}`);
+    await expect(page.locator('#uid')).toContainText(anonUid);
+    await page.getByRole('button', { name: 'Sign Out' }).click();
+    // After signing out, a new anonymous user is created
+    await expect(page.locator('#uid')).not.toContainText(anonUid);
   });
 });

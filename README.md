@@ -6,6 +6,8 @@ Status: Not ready for use!
 
 Note possibly surprising behavior if both allowAnonymous and requireVerification are true.
 
+Password reset relies on Firebase Hosting (may work on App Hosting too)
+
 [Live demo](https://react-firebase-login-273c0.firebaseapp.com/)
 
 ## License
