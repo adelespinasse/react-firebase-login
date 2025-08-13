@@ -482,7 +482,7 @@ export function FirebaseLogin({
   const claims = tokenResult.claims;
 
   return (
-    <AuthContext.Provider value={{ user, claims, signIn }}>
+    <AuthContext.Provider value={{ auth: authInstance, user, claims, signIn }}>
       {children}
     </AuthContext.Provider>
   );
