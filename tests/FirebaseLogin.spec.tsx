@@ -43,10 +43,14 @@ function uniqueEmail() {
 // button in the Firebase Auth emulator's simulated SSO provider page. No idea
 // why. This retries it several times until the email input appears.
 async function clickAddNewAccount(page: Page) {
-  for (const timeout of [500, 200, 300, 400, 500, 1000, 1500]) {
-    await page.getByRole('button', { name: 'Add new account' }).click();
-    const emailInput = await page.getByLabel('Email');
-    if (await emailInput.isVisible({ timeout })) {
+  for (const timeout of [500, 200, 300, 400, 500, 1000]) {
+    try {
+      await page.getByRole('button', { name: 'Add new account' }).click();
+    } catch {
+      // ignore error - in case the form just happened to load after the
+      // previous check for the Email input but before the next click attempt
+    }
+    if (await page.getByLabel('Email').isVisible({ timeout })) {
       return;
     }
   }
