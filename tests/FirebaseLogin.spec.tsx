@@ -45,14 +45,16 @@ function uniqueEmail() {
 async function clickAddNewAccount(page: Page) {
   for (const timeout of [500, 200, 300, 400, 500, 1000]) {
     try {
-      await page.getByRole('button', { name: 'Add new account' }).click();
-    } catch {
+      await page.getByRole('button', { name: 'Add new account' }).click({ timeout});
+    } catch (error) {
       // ignore error - in case the form just happened to load after the
       // previous check for the Email input but before the next click attempt
+      console.log('Click on "Add new account" button failed:', (error as Error).message);
     }
     if (await page.getByLabel('Email').isVisible({ timeout })) {
       return;
     }
+    console.log(`No email button found after ${timeout}ms; trying "Add new account" again`);
   }
 }
 
@@ -134,10 +136,11 @@ test.describe('SSO login-out w popup', () => {
   }
 });
 
-test.describe('Login-logout with email_link', () => {
+test.describe('Login-logout with n', () => {
   test('email_link login and logout', async ({ page }) => {
     const email = uniqueEmail();
     await gotoTestApp({ page, methods: ['email_link', 'google'] });
+    const originalUrl = page.url();
     await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
     await expect(page.locator('#root')).toContainText('Sign in with Google');
     await page.getByRole('button', { name: '📧 Sign in with Email' }).click();
@@ -170,6 +173,9 @@ test.describe('Login-logout with email_link', () => {
     await expect(page.locator('#root')).toContainText('"displayName": null');
     await expect(page.locator('#root')).toContainText('"providerId": "password"');
 
+    // URL should be back to the original clean URL
+    expect(page.url()).toBe(originalUrl);
+
     // Test logout
     await page.getByRole('button', { name: 'Sign Out' }).click();
     await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
@@ -179,6 +185,7 @@ test.describe('Login-logout with email_link', () => {
   test('email_link show only email_link if only email_link method', async ({ page }) => {
     const email = uniqueEmail();
     await gotoTestApp({ page, methods: ['email_link'] });
+    const originalUrl = page.url();
     await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
 
     // Should go straight to email link form since it's the only method
@@ -201,6 +208,9 @@ test.describe('Login-logout with email_link', () => {
 
     // Should be logged in now
     await expect(page.locator('#root')).toContainText(`Logged in as ${email}`);
+
+    // URL should be back to the original clean URL
+    expect(page.url()).toBe(originalUrl);
   });
 
   test('email_link resend link', async ({ page }) => {
