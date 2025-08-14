@@ -1,1 +1,1 @@
-export { EmailLinkLogInUI, type EmailLinkLogInUIProps } from './EmailLinkLogInUI';
+export * from './EmailLinkLogInUI';

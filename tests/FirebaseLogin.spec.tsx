@@ -1,5 +1,5 @@
 import { Page, test, expect } from 'playwright/test';
-import { LogInMethod } from '../lib';
+import { LogInMethod, LogInMethodList } from '../lib';
 
 async function gotoTestApp({
   page,
@@ -10,7 +10,7 @@ async function gotoTestApp({
   link,
 }: {
   page: Page,
-  methods?: LogInMethod[];
+  methods?: LogInMethodList;
   requireVerification?: boolean;
   allowAnonymous?: boolean;
   popup?: boolean;
@@ -56,7 +56,11 @@ async function clickAddNewAccount(page: Page) {
   }
 }
 
-type ProviderLabels = { method: LogInMethod; providerName: string; buttonName: string };
+type ProviderLabels = {
+  method: Exclude<LogInMethod, 'email' | 'email_link'>;
+  providerName: string;
+  buttonName: string;
+};
 
 const providerLabels: ProviderLabels[] = [
   { method: 'google', providerName: 'Google', buttonName: 'Google' },
@@ -85,6 +89,8 @@ test.describe('SSO login-out w redirect', () => {
       await expect(page.locator('body')).toContainText('"displayName": "User Name"');
       await expect(page.locator('body')).toContainText('"emailVerified": true');
       await expect(page.locator('body')).toContainText(`"providerId": "${method}.com"`);
+      // Standard claim to make sure claims are available
+      await expect(page.locator('body')).toContainText('"aud": "react-firebase-login-273c0"');
       await page.getByRole('button', { name: 'Sign Out' }).click();
       await expect(page.locator('body')).toContainText('Firebase Login Test');
     });
@@ -114,6 +120,8 @@ test.describe('SSO login-out w popup', () => {
       await expect(page.locator('body')).toContainText('"displayName": "User Name"');
       await expect(page.locator('body')).toContainText('"emailVerified": true');
       await expect(page.locator('body')).toContainText(`"providerId": "${method}.com"`);
+      // Standard claim to make sure claims are available
+      await expect(page.locator('body')).toContainText('"aud": "react-firebase-login-273c0"');
       await page.getByRole('button', { name: 'Sign Out' }).click();
       await expect(page.locator('body')).toContainText('Firebase Login Test');
     });

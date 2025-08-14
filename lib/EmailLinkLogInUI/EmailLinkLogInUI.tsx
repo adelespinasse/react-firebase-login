@@ -23,16 +23,20 @@ const inputStyle = {
   width: '100%',
 };
 
+// The key used to store the email address for sign-in in localStorage.
+export const EMAIL_FOR_SIGNIN_KEY = 'aldel-react-firebase-login-emailForSignIn';
+
 /** The props for the {@link EmailLinkLogInUI} component.
  * @expand
  */
 export type EmailLinkLogInUIProps = {
   auth?: Auth;
   onClose?: () => void;
+  reSigningIn: boolean;
   linking: boolean;
 };
 
-export function EmailLinkLogInUI({ auth, onClose, linking }: EmailLinkLogInUIProps) {
+export function EmailLinkLogInUI({ auth, onClose, reSigningIn, linking }: EmailLinkLogInUIProps) {
   const authInstance = auth || getAuth();
   const [loginState, setLoginState] = useState<'email' | 'waiting' | 'sent'>('email');
   const [email, setEmail] = useState('');
@@ -56,26 +60,21 @@ export function EmailLinkLogInUI({ auth, onClose, linking }: EmailLinkLogInUIPro
     setError(null);
 
     try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('emailLinkReSigningIn', reSigningIn ? 'true' : 'false');
+      url.searchParams.set('emailLinkLinking', linking ? 'true' : 'false');
       const actionCodeSettings = {
         // URL you want to redirect back to. The domain (www.example.com) for this
         // URL must be in the authorized domains list in the Firebase Console.
-        url: window.location.href,
+        url: url.toString(),
         // This must be true.
         handleCodeInApp: true,
       };
 
-      if (authInstance.currentUser && linking) {
-        // For linking, we need to use linkWithCredential instead
-        // But since we can't create a credential until we get the link,
-        // we'll handle this in the effect above
-        await sendSignInLinkToEmail(authInstance, email, actionCodeSettings);
-      } else {
-        await sendSignInLinkToEmail(authInstance, email, actionCodeSettings);
-      }
-
+      await sendSignInLinkToEmail(authInstance, email, actionCodeSettings);
       // Save the email locally so you don't need to ask the user for it again
       // if they open the link on the same device.
-      window.localStorage.setItem('aldel-react-firebase-login-emailForSignIn', email);
+      window.localStorage.setItem(EMAIL_FOR_SIGNIN_KEY, email);
 
       setLoginState('sent');
     } catch (error) {
@@ -83,7 +82,7 @@ export function EmailLinkLogInUI({ auth, onClose, linking }: EmailLinkLogInUIPro
     } finally {
       setLoading(false);
     }
-  }, [email, authInstance, linking, setFirebaseError]);
+  }, [email, reSigningIn, linking, authInstance, setFirebaseError]);
 
   const inner = () => {
     const emailButtonDisabled = loading || !email;
@@ -134,7 +133,7 @@ export function EmailLinkLogInUI({ auth, onClose, linking }: EmailLinkLogInUIPro
         return (
           <div>
             <p>
-              A sign-in link has been sent to {email}. Click the link in your email to sign in.
+              A link has been sent to {email}. Open the link on this device and browser to sign in.
             </p>
             <div style={buttonContainerStyle}>
               <button
