@@ -1,5 +1,5 @@
 import { Page, test, expect } from 'playwright/test';
-import { LogInMethod } from '../lib';
+import { LogInMethod, LogInMethodList } from '../lib';
 
 async function gotoTestApp({
   page,
@@ -10,7 +10,7 @@ async function gotoTestApp({
   link,
 }: {
   page: Page,
-  methods?: LogInMethod[];
+  methods?: LogInMethodList;
   requireVerification?: boolean;
   allowAnonymous?: boolean;
   popup?: boolean;
@@ -30,7 +30,7 @@ async function gotoTestApp({
     params.set('popup', JSON.stringify(popup));
   }
   if (link !== undefined) {
-    params.set('link', JSON.stringify(link));
+    params.set('linkAccount', JSON.stringify(link));
   }
   await page.goto(`http://localhost:5173/?${params.toString()}`);
 }
@@ -56,7 +56,11 @@ async function clickAddNewAccount(page: Page) {
   }
 }
 
-type ProviderLabels = { method: LogInMethod; providerName: string; buttonName: string };
+type ProviderLabels = {
+  method: Exclude<LogInMethod, 'email' | 'email_link'>;
+  providerName: string;
+  buttonName: string;
+};
 
 const providerLabels: ProviderLabels[] = [
   { method: 'google', providerName: 'Google', buttonName: 'Google' },
@@ -85,8 +89,11 @@ test.describe('SSO login-out w redirect', () => {
       await expect(page.locator('body')).toContainText('"displayName": "User Name"');
       await expect(page.locator('body')).toContainText('"emailVerified": true');
       await expect(page.locator('body')).toContainText(`"providerId": "${method}.com"`);
+      // Standard claim to make sure claims are available
+      await expect(page.locator('body')).toContainText('"aud": "react-firebase-login-273c0"');
       await page.getByRole('button', { name: 'Sign Out' }).click();
       await expect(page.locator('body')).toContainText('Firebase Login Test');
+      await expect(page.locator('#root')).not.toContainText('error', { ignoreCase: true });
     });
   };
 
@@ -114,14 +121,108 @@ test.describe('SSO login-out w popup', () => {
       await expect(page.locator('body')).toContainText('"displayName": "User Name"');
       await expect(page.locator('body')).toContainText('"emailVerified": true');
       await expect(page.locator('body')).toContainText(`"providerId": "${method}.com"`);
+      // Standard claim to make sure claims are available
+      await expect(page.locator('body')).toContainText('"aud": "react-firebase-login-273c0"');
       await page.getByRole('button', { name: 'Sign Out' }).click();
       await expect(page.locator('body')).toContainText('Firebase Login Test');
+      await expect(page.locator('#root')).not.toContainText('error', { ignoreCase: true });
     });
   };
 
   for (const provider of providerLabels) {
     testProvider(provider);
   }
+});
+
+test.describe('Login-logout with email_link', () => {
+  test('email_link login and logout', async ({ page }) => {
+    const email = uniqueEmail();
+    await gotoTestApp({ page, methods: ['email_link', 'google'] });
+    await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
+    await expect(page.locator('#root')).toContainText('Sign in with Google');
+    await page.getByRole('button', { name: '📧 Sign in with Email' }).click();
+
+    // Should see the email link form
+    await expect(page.locator('#root')).toContainText('Enter your email address to receive a sign-in link');
+    await page.getByRole('button', { name: 'Cancel' }).click();
+    await expect(page.locator('#root')).toContainText('Sign in with Google');
+
+    // Now actually send the email link
+    await page.getByRole('button', { name: '📧 Sign in with Email' }).click();
+    await page.getByRole('textbox', { name: 'Email' }).fill(email);
+    await page.getByRole('button', { name: 'Send Sign-In Link' }).click();
+    await expect(page.locator('#root')).toContainText(`A link has been sent to ${email}`);
+    await expect(page.locator('#root')).toContainText('Open the link on this device and browser to sign in');
+
+    // Get the email link from the Firebase emulator
+    const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
+    expect(response.ok).toBeTruthy();
+    const data = await response.json();
+    const code = data.oobCodes.find((code) => code.email === email);
+    expect(code).toBeDefined();
+
+    // Navigate to the sign-in link
+    await page.goto(code.oobLink);
+
+    // Should be logged in now
+    await expect(page.locator('#root')).toContainText(`Logged in as ${email}`);
+    await expect(page.locator('#root')).toContainText('"emailVerified": true');
+    await expect(page.locator('#root')).toContainText('"displayName": null');
+    await expect(page.locator('#root')).toContainText('"providerId": "password"');
+
+    // Test logout
+    await page.getByRole('button', { name: 'Sign Out' }).click();
+    await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
+    await expect(page.locator('#root')).not.toContainText('error', { ignoreCase: true });
+  });
+
+  test('email_link show only email_link if only email_link method', async ({ page }) => {
+    const email = uniqueEmail();
+    await gotoTestApp({ page, methods: ['email_link'] });
+    await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
+
+    // Should go straight to email link form since it's the only method
+    await expect(page.locator('#root')).toContainText('Enter your email address to receive a sign-in link');
+    await expect(page.getByRole('button', { name: 'Cancel' })).not.toBeVisible();
+
+    await page.getByRole('textbox', { name: 'Email' }).fill(email);
+    await page.getByRole('button', { name: 'Send Sign-In Link' }).click();
+    await expect(page.locator('#root')).toContainText(`A link has been sent to ${email}`);
+
+    // Get the email link from the Firebase emulator
+    const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
+    expect(response.ok).toBeTruthy();
+    const data = await response.json();
+    const code = data.oobCodes.find((code) => code.email === email);
+    expect(code).toBeDefined();
+
+    // Navigate to the sign-in link
+    await page.goto(code.oobLink);
+
+    // Should be logged in now
+    await expect(page.locator('#root')).toContainText(`Logged in as ${email}`);
+  });
+
+  test('email_link resend link', async ({ page }) => {
+    const email = uniqueEmail();
+    await gotoTestApp({ page, methods: ['email_link', 'google'] });
+    await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
+    await page.getByRole('button', { name: '📧 Sign in with Email' }).click();
+
+    await page.getByRole('textbox', { name: 'Email' }).fill(email);
+    await page.getByRole('button', { name: 'Send Sign-In Link' }).click();
+    await expect(page.locator('#root')).toContainText(`A link has been sent to ${email}`);
+
+    // Test resend functionality
+    await page.getByRole('button', { name: 'Resend Link' }).click();
+
+    // Make sure the link was "sent" twice
+    const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
+    expect(response.ok).toBeTruthy();
+    const data = await response.json();
+    const codes = data.oobCodes.filter((code) => code.email === email);
+    expect(codes.length).toBe(2);
+  });
 });
 
 test.describe('Login-logout with email', () => {
@@ -342,5 +443,63 @@ test.describe('Anonymous auth', () => {
     await page.getByText('click here').click();
     await expect(page.locator('#root')).toContainText(`Logged in as ${email}`);
     await expect(page.locator('#uid')).not.toContainText(anonUid);
+  });
+
+  test('Anonymous then email_link, no linking', async ({ page }) => {
+    const email = uniqueEmail();
+    await gotoTestApp({ page, methods: ['google', 'email_link'], allowAnonymous: true });
+    await expect(page.locator('#root')).toContainText('Logged in as Anonymous User');
+    const anonUid = await page.locator('#uid').innerText();
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: '📧 Sign in with Email' }).click();
+
+    // Should see the email link form
+    await expect(page.locator('#root')).toContainText('Enter your email address to receive a sign-in link');
+    await page.getByRole('textbox', { name: 'Email' }).fill(email);
+    await page.getByRole('button', { name: 'Send Sign-In Link' }).click();
+    await expect(page.locator('#root')).toContainText(`A link has been sent to ${email}`);
+
+    // Get the email link from the Firebase emulator
+    const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
+    expect(response.ok).toBeTruthy();
+    const data = await response.json();
+    const code = data.oobCodes.find((code) => code.email === email);
+    expect(code).toBeDefined();
+
+    // Navigate to the sign-in link
+    await page.goto(code.oobLink);
+
+    // Should be logged in now with new user (no linking)
+    await expect(page.locator('#root')).toContainText(`Logged in as ${email}`);
+    await expect(page.locator('#uid')).not.toContainText(anonUid);
+  });
+
+  test('Anonymous then email_link, with linking', async ({ page }) => {
+    const email = uniqueEmail();
+    await gotoTestApp({ page, methods: ['google', 'email_link'], allowAnonymous: true, link: true });
+    await expect(page.locator('#root')).toContainText('Logged in as Anonymous User');
+    const anonUid = await page.locator('#uid').innerText();
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: '📧 Sign in with Email' }).click();
+
+    // Should see the email link form
+    await expect(page.locator('#root')).toContainText('Enter your email address to receive a sign-in link');
+    await page.getByRole('textbox', { name: 'Email' }).fill(email);
+    await page.getByRole('button', { name: 'Send Sign-In Link' }).click();
+    await expect(page.locator('#root')).toContainText(`A link has been sent to ${email}`);
+
+    // Get the email link from the Firebase emulator
+    const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
+    expect(response.ok).toBeTruthy();
+    const data = await response.json();
+    const code = data.oobCodes.find((code) => code.email === email);
+    expect(code).toBeDefined();
+
+    // Navigate to the sign-in link
+    await page.goto(code.oobLink);
+
+    // Should be logged in now with same UID (linking worked)
+    await expect(page.locator('#root')).toContainText(`Logged in as ${email}`);
+    await expect(page.locator('#uid')).toContainText(anonUid);
   });
 });

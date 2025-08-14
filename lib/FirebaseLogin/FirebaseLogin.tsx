@@ -17,6 +17,7 @@ import {
   getRedirectResult,
   GithubAuthProvider,
   GoogleAuthProvider,
+  linkWithCredential,
   linkWithPopup,
   linkWithRedirect,
   OAuthProvider,
@@ -26,6 +27,9 @@ import {
   type AuthProvider,
   getAdditionalUserInfo,
   type UserCredential,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+  EmailAuthProvider,
 } from 'firebase/auth';
 import { type FirebaseError } from 'firebase/app';
 import {
@@ -40,18 +44,29 @@ import {
 } from 'react-social-login-buttons';
 
 import { EmailLogInUI } from '../EmailLogInUI';
+import { EmailLinkLogInUI, EMAIL_FOR_SIGNIN_KEY } from '../EmailLinkLogInUI';
 import { LogoutButton } from '../LogoutButton/LogoutButton';
 import { containerStyle, formatFirebaseError } from '../shared';
 import { type FrameFunction, noFrame } from '../frames';
 import { AuthContext } from './useAuth';
 
-/** Supported login methods. */
+const REDIRECT_STATE_KEY = 'aldel-react-firebase-login-redirect';
+
+/** Supported login methods. 'email' means classic email and password login.
+ * Use 'email_link' instead if you have "Email link (passwordless sign-in)"
+ * enabled in the Firebase console. Since Firebase email login can only be
+ * configured to work one way or the other, you must not include both 'email'
+ * and 'email_link' in the methods list.
+ * @expand */
 export type LogInMethod = 'apple' | 'facebook' | 'github' | 'google'
-  | 'microsoft' | 'twitter' | 'yahoo' | 'email';
+  | 'microsoft' | 'twitter' | 'yahoo' | 'email' | 'email_link';
+
+/** An array of {@link LogInMethod}s, cleverly designed to prevent both 'email'
+ * and 'email_link' from appearing in the same array. */
+export type LogInMethodList = Exclude<LogInMethod, 'email'>[] | Exclude<LogInMethod, 'email_link'>[];
 
 /** The props for the {@link FirebaseLogin} component.
- * @expand
-*/
+ * @expand */
 export type FirebaseLoginProps = {
   /** The Firebase Auth instance to use. If not provided, the default auth instance will be used. */
   auth?: Auth;
@@ -72,7 +87,7 @@ export type FirebaseLoginProps = {
    * be required to verify their email address only when they sign in. */
   allowAnonymous?: boolean;
   /** The login methods that will be displayed to the user. */
-  methods?: LogInMethod[];
+  methods?: LogInMethodList;
   /** If true, federated login methods that support a popup sign-in will use a popup.
    * Otherwise, the sign-in will be done with a redirect. */
   popup?: boolean;
@@ -99,6 +114,14 @@ const EmailLoginButton = createButton({
   },
 });
 
+function clearEmailLinkSearchParams(searchParams: URLSearchParams) {
+  for (const param of ['mode', 'lang', 'oobCode', 'apiKey', 'emailLinkReSigningIn', 'emailLinkLinking']) {
+    searchParams.delete(param);
+  }
+  const url = new URL(window.location.href);
+  url.search = searchParams.toString();
+  window.history.replaceState({}, '', url.toString());
+}
 /** A React component that provides Firebase Authentication to its children. If the user is
  * authenticated (and other requirements are met, such as requiring email verification when
  * enabled), the children are rendered unaltered. Otherwise a UI is displayed that allows the
@@ -128,7 +151,10 @@ export function FirebaseLogin({
   const [reSigningIn, setReSigningIn] = useState(false);
   const [linking, setLinking] = useState(false);
   const onlyEmail = methods?.length === 1 && methods[0] === 'email';
-  const [page, setPage] = useState<'home' | 'email'>(onlyEmail ? 'email' : 'home');
+  const onlyEmailLink = methods?.length === 1 && methods[0] === 'email_link';
+  const [page, setPage] = useState<'home' | 'email' | 'email_link'>(
+    onlyEmail ? 'email' : onlyEmailLink ? 'email_link' : 'home'
+  );
   const [loading, setLoading] = useState(false);
 
   const signIn = useCallback((link: boolean = false) => {
@@ -252,20 +278,72 @@ export function FirebaseLogin({
       try {
         const result = await getRedirectResult(authInstance);
         if (result) {
-          localStorage.removeItem('aldel-react-firebase-login-redirect');
+          localStorage.removeItem(REDIRECT_STATE_KEY);
           await handleUserCredential(result);
         }
       } catch (err) {
         console.error('Error getting redirect result:', err);
         setFirebaseError(err as FirebaseError);
-        const stored = localStorage.getItem('aldel-react-firebase-login-redirect');
+        const stored = localStorage.getItem(REDIRECT_STATE_KEY);
         const [wasReSigningIn, wasLinking] = JSON.parse(stored || '[false, false]');
-        localStorage.removeItem('aldel-react-firebase-login-redirect');
+        localStorage.removeItem(REDIRECT_STATE_KEY);
         setReSigningIn(wasReSigningIn);
         setLinking(wasLinking);
       }
     })();
   }, [authInstance, setFirebaseError, handleUserCredential]);
+
+  useEffect(() => {
+    if (!initialized) {
+      return;
+    }
+    (async () => {
+      const emailLink = window.location.href;
+      // Check if the user is completing an email link sign-in
+      if (!isSignInWithEmailLink(authInstance, emailLink)) {
+        return;
+      }
+      const searchParams = new URLSearchParams(window.location.search);
+      const wasReSigningIn = searchParams.get('emailLinkReSigningIn') === 'true';
+      const wasLinking = searchParams.get('emailLinkLinking') === 'true';
+      const emailForSignIn = window.localStorage.getItem(EMAIL_FOR_SIGNIN_KEY);
+      if (!emailForSignIn) {
+        // User opened the link on a different device or browser. To avoid session fixation
+        // attacks, we require it to be on the same device and browser.
+        setReSigningIn(wasReSigningIn);
+        setLinking(wasLinking);
+        setError('You must open the sign-in link on the same device and browser where you \
+requested it, and it can only be used once.');
+        clearEmailLinkSearchParams(searchParams);
+        return;
+      }
+
+      try {
+        if (wasLinking) {
+          if (!user) {
+            return;
+          }
+          const credential = EmailAuthProvider.credentialWithLink(emailForSignIn, emailLink);
+          await linkWithCredential(user, credential);
+        } else {
+          await signInWithEmailLink(authInstance, emailForSignIn, emailLink);
+        }
+        window.localStorage.removeItem(EMAIL_FOR_SIGNIN_KEY);
+        clearEmailLinkSearchParams(searchParams);
+        if (wasLinking && user) {
+          // If linking to a new provider, apparently we need to reload the page.
+          window.location.reload();
+        }
+      } catch (error) {
+        const fbError = error as FirebaseError;
+        console.error('Error signing in with email link:', error);
+        setReSigningIn(wasReSigningIn);
+        setLinking(wasLinking);
+        setFirebaseError(fbError);
+        clearEmailLinkSearchParams(searchParams);
+      }
+    })();
+  }, [authInstance, handleUserCredential, initialized, setFirebaseError, user]);
 
   const doSignIn = useCallback(
     async (provider: AuthProvider) => {
@@ -286,7 +364,7 @@ export function FirebaseLogin({
           await handleUserCredential(credential);
         } else {
           // Save state for after redirect and getRedirectResult... ugh
-          localStorage.setItem('aldel-react-firebase-login-redirect', JSON.stringify([reSigningIn, linking]));
+          localStorage.setItem(REDIRECT_STATE_KEY, JSON.stringify([reSigningIn, linking]));
           if (user && linking) {
             // User is already authenticated, etc.
             linkWithRedirect(user, provider);
@@ -377,6 +455,16 @@ export function FirebaseLogin({
         key="email"
       />
     ),
+    email_link: (
+      <EmailLoginButton
+        onClick={() => {
+          setError(null);
+          setPage('email_link');
+        }}
+        disabled={loading}
+        key="email_link"
+      />
+    ),
   };
 
   const renderLoginContent = () => {
@@ -389,13 +477,21 @@ export function FirebaseLogin({
       />;
     }
 
+    if (page === 'email_link') {
+      return <EmailLinkLogInUI
+        auth={authInstance}
+        onClose={onlyEmailLink ? undefined : () => setPage('home')}
+        reSigningIn={reSigningIn}
+        linking={linking}
+      />;
+    }
+
     return (
       <div
         style={containerStyle}
         className="react-firebase-login-ui-container"
       >
         {(methods || ['google']).map((method) => methodMap[method])}
-        {error && <p style={{ color: 'red', textAlign: 'center' }}>Error: {error}</p>}
       </div>
     );
   };
@@ -429,6 +525,7 @@ export function FirebaseLogin({
           </button>
         )}
         {children}
+        {error && <p style={{ color: 'red' }}>Error: {error}</p>}
         {footer}
       </div>
     );
@@ -467,7 +564,6 @@ export function FirebaseLogin({
           Resend email
         </button>
         <LogoutButton />
-        {error && <div style={{ color: 'red' }}>Error: {error}</div>}
       </div>
     );
   }
@@ -477,7 +573,7 @@ export function FirebaseLogin({
   }
 
   if (!tokenResult) {
-    return null;
+    return wrapped(null);
   }
 
   const claims = tokenResult.claims;
