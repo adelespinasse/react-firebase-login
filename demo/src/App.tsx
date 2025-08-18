@@ -24,6 +24,9 @@ function InnerContent() {
       Claims:
       <pre style={{ maxWidth: '800px', overflow: 'auto', border: '1px solid #ccc', padding: '10px', borderRadius: '5px' }}>{JSON.stringify(claims, null, 2)}</pre>
       <LogoutButton />
+      <p>
+        <a href="https://github.com/adelespinasse/react-firebase-login">View project on GitHub</a>
+      </p>
     </div>
   );
 }
@@ -31,12 +34,10 @@ function InnerContent() {
 function App() {
   return (
     <FirebaseLogin
-      methods={[
-        'google', 'facebook', 'apple', 'microsoft',
-        'twitter', 'yahoo', 'github', 'email',
-      ]}
+      methods={['google', 'facebook', 'github', 'email']}
       requireVerification
-      header={<h1>Demo App</h1>}
+      header={<h1>react-firebase-login demo</h1>}
+      footer={<a href="https://github.com/adelespinasse/react-firebase-login">View project on GitHub</a>}
       frame={fullPageFrame}
     >
       <InnerContent />
