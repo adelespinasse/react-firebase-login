@@ -39,6 +39,30 @@ function uniqueEmail() {
   return `${crypto.randomUUID()}@domain.tld`;
 }
 
+function uniquePhoneNumber() {
+  // Generate a random 10-digit phone number with +1 prefix
+  const number = Math.floor(Math.random() * 9000000000) + 1000000000;
+  return `+1${number}`;
+}
+
+async function getVerificationCode(phoneNumber: string) {
+  // Wait a bit for the code to be generated
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/verificationCodes');
+  expect(response.ok).toBeTruthy();
+  const data = await response.json();
+
+  // Phone numbers might be formatted differently in the emulator
+  const code = data.verificationCodes.find((code) =>
+    code.phoneNumber === phoneNumber ||
+    code.phoneNumber === phoneNumber.replace(/^\+1/, '+1 ') ||
+    code.phoneNumber.replace(/\s/g, '') === phoneNumber
+  );
+  expect(code).toBeDefined();
+  return code.code;
+}
+
 // Sometimes nothing happens when the test clicks on the "Add new account"
 // button in the Firebase Auth emulator's simulated SSO provider page. No idea
 // why. This retries it several times until the email input appears.
@@ -59,7 +83,7 @@ async function clickAddNewAccount(page: Page) {
 }
 
 type ProviderLabels = {
-  method: Exclude<LogInMethod, 'email' | 'email_link'>;
+  method: Exclude<LogInMethod, 'email' | 'email_link' | 'phone'>;
   providerName: string;
   buttonName: string;
 };
@@ -549,6 +573,109 @@ test.describe('Anonymous auth', () => {
 
     // Should be logged in now with same UID (linking worked)
     await expect(page.locator('#root')).toContainText(`Logged in as ${email}`);
+    await expect(page.locator('#uid')).toContainText(anonUid);
+  });
+});
+
+test.describe('Phone authentication', () => {
+  test('phone login and logout', async ({ page }) => {
+    const phoneNumber = uniquePhoneNumber();
+    await gotoTestApp({ page, methods: ['phone', 'google'] });
+    await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
+    await expect(page.locator('#root')).toContainText('Sign in with Google');
+    await page.getByRole('button', { name: '📱 Sign in with Phone' }).click();
+
+    // Should see the phone number form
+    await expect(page.locator('#root')).toContainText('Sign in with your phone number:');
+    await page.getByRole('button', { name: 'Cancel' }).click();
+    await expect(page.locator('#root')).toContainText('Sign in with Google');
+
+    // Now actually fill out the form
+    await page.getByRole('button', { name: '📱 Sign in with Phone' }).click();
+    await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
+
+    // In the Firebase Auth emulator, we need to handle the reCAPTCHA mock
+    await page.getByRole('button', { name: 'Send Code' }).click();
+
+    // Should see the verification code form
+    await expect(page.locator('#root')).toContainText(`Enter the verification code sent to ${phoneNumber}:`);
+
+    // Get the actual verification code from the Firebase emulator
+    const verificationCode = await getVerificationCode(phoneNumber);
+    await page.getByRole('textbox', { name: 'Verification code' }).fill(verificationCode);
+    await page.getByRole('button', { name: 'Verify' }).click();
+
+    // Should be logged in now
+    await expect(page.locator('#root')).toContainText(`Logged in as ${phoneNumber}`);
+    await expect(page.locator('#root')).not.toContainText('error', { ignoreCase: true });
+
+    // Sign out
+    await page.getByRole('button', { name: 'Sign Out' }).click();
+    await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
+    await expect(page.locator('#root')).not.toContainText('error', { ignoreCase: true });
+  });
+
+  test('phone show only phone if only phone method', async ({ page }) => {
+    const phoneNumber = uniquePhoneNumber();
+    await gotoTestApp({ page, methods: ['phone'] });
+    await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
+
+    // Should go straight to phone form since it's the only method
+    await expect(page.locator('#root')).toContainText('Sign in with your phone number:');
+    await expect(page.getByRole('button', { name: 'Cancel' })).not.toBeVisible();
+
+    await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
+    await page.getByRole('button', { name: 'Send Code' }).click();
+    await expect(page.locator('#root')).toContainText(`Enter the verification code sent to ${phoneNumber}:`);
+
+    const verificationCode2 = await getVerificationCode(phoneNumber);
+    await page.getByRole('textbox', { name: 'Verification code' }).fill(verificationCode2);
+    await page.getByRole('button', { name: 'Verify' }).click();
+
+    await expect(page.locator('#root')).toContainText(`Logged in as ${phoneNumber}`);
+  });
+
+  test('Anonymous then phone, no linking', async ({ page }) => {
+    const phoneNumber = uniquePhoneNumber();
+    await gotoTestApp({ page, methods: ['google', 'phone'], allowAnonymous: true });
+    await expect(page.locator('#root')).toContainText('Logged in as Anonymous User');
+    const anonUid = await page.locator('#uid').innerText();
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: '📱 Sign in with Phone' }).click();
+
+    // Should see the phone form
+    await expect(page.locator('#root')).toContainText('Sign in with your phone number:');
+    await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
+    await page.getByRole('button', { name: 'Send Code' }).click();
+    await expect(page.locator('#root')).toContainText(`Enter the verification code sent to ${phoneNumber}:`);
+    const verificationCode3 = await getVerificationCode(phoneNumber);
+    await page.getByRole('textbox', { name: 'Verification code' }).fill(verificationCode3);
+    await page.getByRole('button', { name: 'Verify' }).click();
+
+    // Should be logged in now with new user (no linking)
+    await expect(page.locator('#root')).toContainText(`Logged in as ${phoneNumber}`);
+    await expect(page.locator('#uid')).not.toContainText(anonUid);
+  });
+
+  test('Anonymous then phone, with linking', async ({ page }) => {
+    const phoneNumber = uniquePhoneNumber();
+    await gotoTestApp({ page, methods: ['google', 'phone'], allowAnonymous: true, link: true });
+    await expect(page.locator('#root')).toContainText('Logged in as Anonymous User');
+    const anonUid = await page.locator('#uid').innerText();
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: '📱 Sign in with Phone' }).click();
+
+    // Should see the phone form
+    await expect(page.locator('#root')).toContainText('Sign in with your phone number:');
+    await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
+    await page.getByRole('button', { name: 'Send Code' }).click();
+    await expect(page.locator('#root')).toContainText(`Enter the verification code sent to ${phoneNumber}:`);
+    const verificationCode4 = await getVerificationCode(phoneNumber);
+    await page.getByRole('textbox', { name: 'Verification code' }).fill(verificationCode4);
+    await page.getByRole('button', { name: 'Verify' }).click();
+
+    // Should be logged in now with same UID (linking worked)
+    await expect(page.locator('#root')).toContainText(`Logged in as ${phoneNumber}`);
     await expect(page.locator('#uid')).toContainText(anonUid);
   });
 });

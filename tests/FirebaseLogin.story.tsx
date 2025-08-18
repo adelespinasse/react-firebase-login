@@ -11,7 +11,7 @@ function InnerContent({ link }: { link: boolean }) {
   return (
     <div className="inner-content">
       <p>
-        Logged in as { user.isAnonymous ? 'Anonymous User' : user.email || '(No email)' }
+        Logged in as { user.isAnonymous ? 'Anonymous User' : user.email || user.phoneNumber || '(No email)' }
       </p>
       <pre id="uid">{user.uid}</pre>
       <p>
