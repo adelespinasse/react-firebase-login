@@ -45,6 +45,7 @@ import {
 
 import { EmailLogInUI } from '../EmailLogInUI';
 import { EmailLinkLogInUI, EMAIL_FOR_SIGNIN_KEY } from '../EmailLinkLogInUI';
+import { PhoneLogInUI } from '../PhoneLogInUI';
 import { LogoutButton } from '../LogoutButton/LogoutButton';
 import { containerStyle, formatFirebaseError } from '../shared';
 import { type FrameFunction, noFrame } from '../frames';
@@ -59,7 +60,7 @@ const REDIRECT_STATE_KEY = 'aldel-react-firebase-login-redirect';
  * and 'email_link' in the methods list.
  * @expand */
 export type LogInMethod = 'apple' | 'facebook' | 'github' | 'google'
-  | 'microsoft' | 'twitter' | 'yahoo' | 'email' | 'email_link';
+  | 'microsoft' | 'twitter' | 'yahoo' | 'email' | 'email_link' | 'phone';
 
 /** An array of {@link LogInMethod}s, cleverly designed to prevent both 'email'
  * and 'email_link' from appearing in the same array. */
@@ -70,8 +71,9 @@ export type LogInMethodList = Exclude<LogInMethod, 'email'>[] | Exclude<LogInMet
 export type FirebaseLoginProps = {
   /** The Firebase Auth instance to use. If not provided, the default auth instance will be used. */
   auth?: Auth;
-  /** Defaults to true. If true, users will be required to verify their email address when they
-   * sign up. With some providers (e.g. Google), verification is automatic. */
+  /** Defaults to true. If true, users will be required to verify their email
+   * address when they sign up. With some providers (e.g. Google), verification
+   * is automatic. With phone login, verification is automatically bypassed. */
   requireVerification?: boolean;
   /** If true, the user does not need to sign in; they will automatically be
    * signed in anonymously, and the children will be displayed. The login UI is
@@ -108,6 +110,15 @@ export type FirebaseLoginProps = {
 const EmailLoginButton = createButton({
   text: 'Sign in with Email',
   icon: () => '📧',
+  style: {
+    backgroundColor: '#fff',
+    color: '#000',
+  },
+});
+
+const PhoneLoginButton = createButton({
+  text: 'Sign in with Phone',
+  icon: () => '📱',
   style: {
     backgroundColor: '#fff',
     color: '#000',
@@ -152,8 +163,9 @@ export function FirebaseLogin({
   const [linking, setLinking] = useState(false);
   const onlyEmail = methods?.length === 1 && methods[0] === 'email';
   const onlyEmailLink = methods?.length === 1 && methods[0] === 'email_link';
-  const [page, setPage] = useState<'home' | 'email' | 'email_link'>(
-    onlyEmail ? 'email' : onlyEmailLink ? 'email_link' : 'home'
+  const onlyPhone = methods?.length === 1 && methods[0] === 'phone';
+  const [page, setPage] = useState<'home' | 'email' | 'email_link' | 'phone'>(
+    onlyEmail ? 'email' : onlyEmailLink ? 'email_link' : onlyPhone ? 'phone' : 'home'
   );
   const [loading, setLoading] = useState(false);
 
@@ -190,7 +202,9 @@ export function FirebaseLogin({
   }, []);
 
   const handleUserCredential = useCallback(async (credential: UserCredential) => {
-    if (requireVerification) {
+    if (credential.user.providerData[0]?.providerId === 'phone') {
+      setVerified(true);
+    } else if (requireVerification) {
       const additionalInfo = getAdditionalUserInfo(credential);
       if (additionalInfo?.isNewUser && !credential.user.emailVerified) {
         await sendVerification(credential.user);
@@ -465,6 +479,16 @@ requested it, and it can only be used once.');
         key="email_link"
       />
     ),
+    phone: (
+      <PhoneLoginButton
+        onClick={() => {
+          setError(null);
+          setPage('phone');
+        }}
+        disabled={loading}
+        key="phone"
+      />
+    ),
   };
 
   const renderLoginContent = () => {
@@ -482,6 +506,15 @@ requested it, and it can only be used once.');
         auth={authInstance}
         onClose={onlyEmailLink ? undefined : () => setPage('home')}
         reSigningIn={reSigningIn}
+        linking={linking}
+      />;
+    }
+
+    if (page === 'phone') {
+      return <PhoneLogInUI
+        auth={authInstance}
+        onClose={onlyPhone ? undefined : () => setPage('home')}
+        handleUserCredential={handleUserCredential}
         linking={linking}
       />;
     }
