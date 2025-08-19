@@ -59,12 +59,46 @@ const REDIRECT_STATE_KEY = 'aldel-react-firebase-login-redirect';
  * configured to work one way or the other, you must not include both 'email'
  * and 'email_link' in the methods list.
  * @expand */
-export type LogInMethod = 'apple' | 'facebook' | 'github' | 'google'
+export type LoginMethodName = 'apple' | 'facebook' | 'github' | 'google'
   | 'microsoft' | 'twitter' | 'yahoo' | 'email' | 'email_link' | 'phone';
 
-/** An array of {@link LogInMethod}s, cleverly designed to prevent both 'email'
- * and 'email_link' from appearing in the same array. */
-export type LogInMethodList = Exclude<LogInMethod, 'email'>[] | Exclude<LogInMethod, 'email_link'>[];
+/** Options for OAuth login methods. */
+export type OAuthOptions = {
+  /** Extra OAuth scopes to request. */
+  scopes?: string[];
+};
+
+/** A login method with any options it supports. */
+export type LoginMethodWithOptions = readonly ['apple', OAuthOptions?]
+   | readonly ['facebook', OAuthOptions?]
+   | readonly ['github', OAuthOptions?]
+   | readonly ['google', OAuthOptions?]
+   | readonly ['microsoft', OAuthOptions?]
+   | readonly ['twitter', OAuthOptions?]
+   | readonly ['yahoo', OAuthOptions?]
+   | readonly ['email']
+   | readonly ['email_link']
+   | readonly ['phone'];
+
+/** A login method can be specified with either just the name
+ * ({@link LoginMethodName}), or a tuple of the name plus options
+ * ({@link LoginMethodWithOptions}). */
+export type LoginMethod = LoginMethodName | LoginMethodWithOptions;
+
+/** An array of {@link LoginMethodName}s. Should not contain duplicates, nor
+ * should it ever contain both `email` and `email_link`, but those restrictions
+ * are not checked. */
+export type LoginMethodList = readonly LoginMethod[];
+
+// Converts a LoginMethod to a LoginMethodWithOptions, if it is not already.
+function withOptions(method: LoginMethod): LoginMethodWithOptions {
+  if (Array.isArray(method)) {
+    // Don't think the cast should be necessary, but TypeScript doesn't infer it correctly.
+    return method as LoginMethodWithOptions;
+  }
+  // Don't think the cast should be necessary, but TypeScript doesn't infer it correctly.
+  return [method] as LoginMethodWithOptions;
+}
 
 /** The props for the {@link FirebaseLogin} component.
  * @expand */
@@ -88,11 +122,16 @@ export type FirebaseLoginProps = {
    * If `allowAnonymous` and `requireVerification` are both true, the user will
    * be required to verify their email address only when they sign in. */
   allowAnonymous?: boolean;
-  /** The login methods that will be displayed to the user. */
-  methods?: LogInMethodList;
-  /** If true, federated login methods that support a popup sign-in will use a popup.
-   * Otherwise, the sign-in will be done with a redirect. */
-  popup?: boolean;
+  /** The login methods that will be displayed to the user, in the order that
+   * they will be displayed. */
+  methods?: LoginMethodList;
+  /** If true, federated login methods will sign in with a redirect. Otherwise,
+   * the sign-in will be done with a popup. If using redirect, you should
+   * follow [best
+   * practices](https://firebase.google.com/docs/auth/web/redirect-best-practices)
+   * and be aware that it [won't work locally without the
+   * emulator](https://github.com/firebase/firebase-js-sdk/issues/7342). */
+  redirect?: boolean;
   /** A header to display above the login buttons. */
   header?: React.ReactNode;
   /** A footer to display below the login buttons. */
@@ -125,6 +164,11 @@ const PhoneLoginButton = createButton({
   },
 });
 
+// This should have been exported by firebase/auth, but it isn't.
+type BaseOAuthProvider = AuthProvider & {
+  addScope: (scope: string) => AuthProvider;
+};
+
 function clearEmailLinkSearchParams(searchParams: URLSearchParams) {
   for (const param of ['mode', 'lang', 'oobCode', 'apiKey', 'emailLinkReSigningIn', 'emailLinkLinking']) {
     searchParams.delete(param);
@@ -144,13 +188,15 @@ export function FirebaseLogin({
   auth,
   requireVerification = true,
   allowAnonymous = false,
-  methods,
-  popup,
+  methods: methodList = ['google'],
+  redirect,
   header = null,
   footer = null,
   frame = noFrame,
   children,
 }: FirebaseLoginProps) {
+  const popup = !redirect;
+  const methods = methodList.map((m) => withOptions(m));
   const authInstance = auth || getAuth();
   const [initialized, setInitialized] = useState(false);
   // This `verified` really means "verified OR anonymous user OR verification is not required"
@@ -161,9 +207,9 @@ export function FirebaseLogin({
   const [tokenResult, setTokenResult] = useState<IdTokenResult | null>(null);
   const [reSigningIn, setReSigningIn] = useState(false);
   const [linking, setLinking] = useState(false);
-  const onlyEmail = methods?.length === 1 && methods[0] === 'email';
-  const onlyEmailLink = methods?.length === 1 && methods[0] === 'email_link';
-  const onlyPhone = methods?.length === 1 && methods[0] === 'phone';
+  const onlyEmail = methods?.length === 1 && methods[0]?.[0] === 'email';
+  const onlyEmailLink = methods?.length === 1 && methods[0]?.[0] === 'email_link';
+  const onlyPhone = methods?.length === 1 && methods[0]?.[0] === 'phone';
   const [page, setPage] = useState<'home' | 'email' | 'email_link' | 'phone'>(
     onlyEmail ? 'email' : onlyEmailLink ? 'email_link' : onlyPhone ? 'phone' : 'home'
   );
@@ -359,10 +405,15 @@ requested it, and it can only be used once.');
     })();
   }, [authInstance, handleUserCredential, initialized, setFirebaseError, user]);
 
-  const doSignIn = useCallback(
-    async (provider: AuthProvider) => {
+  const doOAuthSignIn = useCallback(
+    async (provider: BaseOAuthProvider, options: OAuthOptions | undefined) => {
       setError(null);
       setLoading(true);
+      if (options?.scopes) {
+        for (const scope of options.scopes) {
+          provider.addScope(scope);
+        }
+      }
       try {
         if (popup) {
           const getCredential = () => {
@@ -395,100 +446,102 @@ requested it, and it can only be used once.');
     [popup, handleUserCredential, user, linking, authInstance, reSigningIn, setFirebaseError],
   );
 
-  const methodMap = {
-    apple: (
-      <AppleLoginButton
-        onClick={() => doSignIn(new OAuthProvider('apple.com'))}
-        disabled={loading}
-        key="apple"
-      >
-        Sign in with Apple
-      </AppleLoginButton>
-    ),
-    facebook: (
-      <FacebookLoginButton
-        onClick={() => doSignIn(new FacebookAuthProvider())}
-        disabled={loading}
-        key="facebook"
-      >
-        Sign in with Facebook
-      </FacebookLoginButton>
-    ),
-    github: (
-      <GithubLoginButton
-        onClick={() => doSignIn(new GithubAuthProvider())}
-        disabled={loading}
-        key="github"
-      >
-        Sign in with GitHub
-      </GithubLoginButton>
-    ),
-    google: (
-      <GoogleLoginButton
-        onClick={() => doSignIn(new GoogleAuthProvider())}
-        disabled={loading}
-        key="google"
-      >
-        Sign in with Google
-      </GoogleLoginButton>
-    ),
-    microsoft: (
-      <MicrosoftLoginButton
-        onClick={() => doSignIn(new OAuthProvider('microsoft.com'))}
-        disabled={loading}
-        key="microsoft"
-      >
-        Sign in with Microsoft
-      </MicrosoftLoginButton>
-    ),
-    twitter : (
-      <XLoginButton
-        onClick={() => doSignIn(new TwitterAuthProvider())}
-        disabled={loading}
-        key="twitter"
-      >
-        Sign in with X
-      </XLoginButton>
-    ),
-    yahoo: (
-      <YahooLoginButton
-        onClick={() => doSignIn(new OAuthProvider('yahoo.com'))}
-        disabled={loading}
-        key="yahoo"
-      >
-        Sign in with Yahoo
-      </YahooLoginButton>
-    ),
-    email: (
-      <EmailLoginButton
-        onClick={() => {
-          setError(null);
-          setPage('email');
-        }}
-        disabled={loading}
-        key="email"
-      />
-    ),
-    email_link: (
-      <EmailLoginButton
-        onClick={() => {
-          setError(null);
-          setPage('email_link');
-        }}
-        disabled={loading}
-        key="email_link"
-      />
-    ),
-    phone: (
-      <PhoneLoginButton
-        onClick={() => {
-          setError(null);
-          setPage('phone');
-        }}
-        disabled={loading}
-        key="phone"
-      />
-    ),
+  const methodMap = ([name, options]: LoginMethodWithOptions) => {
+    switch (name) {
+      case 'apple': return (
+        <AppleLoginButton
+          onClick={() => doOAuthSignIn(new OAuthProvider('apple.com'), options)}
+          disabled={loading}
+          key="apple"
+        >
+          Sign in with Apple
+        </AppleLoginButton>
+      );
+      case 'facebook': return (
+        <FacebookLoginButton
+          onClick={() => doOAuthSignIn(new FacebookAuthProvider(), options)}
+          disabled={loading}
+          key="facebook"
+        >
+          Sign in with Facebook
+        </FacebookLoginButton>
+      );
+      case 'github': return (
+        <GithubLoginButton
+          onClick={() => doOAuthSignIn(new GithubAuthProvider(), options)}
+          disabled={loading}
+          key="github"
+        >
+          Sign in with GitHub
+        </GithubLoginButton>
+      );
+      case 'google': return (
+        <GoogleLoginButton
+          onClick={() => doOAuthSignIn(new GoogleAuthProvider(), options)}
+          disabled={loading}
+          key="google"
+        >
+          Sign in with Google
+        </GoogleLoginButton>
+      );
+      case 'microsoft': return (
+        <MicrosoftLoginButton
+          onClick={() => doOAuthSignIn(new OAuthProvider('microsoft.com'), options)}
+          disabled={loading}
+          key="microsoft"
+        >
+          Sign in with Microsoft
+        </MicrosoftLoginButton>
+      );
+      case 'twitter' : return (
+        <XLoginButton
+          onClick={() => doOAuthSignIn(new TwitterAuthProvider(), options)}
+          disabled={loading}
+          key="twitter"
+        >
+          Sign in with X
+        </XLoginButton>
+      );
+      case 'yahoo': return (
+        <YahooLoginButton
+          onClick={() => doOAuthSignIn(new OAuthProvider('yahoo.com'), options)}
+          disabled={loading}
+          key="yahoo"
+        >
+          Sign in with Yahoo
+        </YahooLoginButton>
+      );
+      case 'email': return (
+        <EmailLoginButton
+          onClick={() => {
+            setError(null);
+            setPage('email');
+          }}
+          disabled={loading}
+          key="email"
+        />
+      );
+      case 'email_link': return (
+        <EmailLoginButton
+          onClick={() => {
+            setError(null);
+            setPage('email_link');
+          }}
+          disabled={loading}
+          key="email_link"
+        />
+      );
+      case 'phone': return (
+        <PhoneLoginButton
+          onClick={() => {
+            setError(null);
+            setPage('phone');
+          }}
+          disabled={loading}
+          key="phone"
+        />
+      );
+    }
   };
 
   const renderLoginContent = () => {
@@ -524,7 +577,7 @@ requested it, and it can only be used once.');
         style={containerStyle}
         className="react-firebase-login-ui-container"
       >
-        {(methods || ['google']).map((method) => methodMap[method])}
+        { methods.map(methodMap) }
       </div>
     );
   };

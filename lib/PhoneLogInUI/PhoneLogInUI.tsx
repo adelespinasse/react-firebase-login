@@ -36,7 +36,7 @@ export type PhoneLogInUIProps = {
 
 export function PhoneLogInUI({ auth, onClose, handleUserCredential, linking }: PhoneLogInUIProps) {
   const [loginState, setLoginState] = useState<'phone' | 'verify'>('phone');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('+1 ');
   const [verificationCode, setVerificationCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -137,7 +137,7 @@ export function PhoneLogInUI({ auth, onClose, handleUserCredential, linking }: P
               sendCode();
             }}
           >
-            <p>Sign in with your phone number:</p>
+            <p>Sign in with your phone number (including country code, e.g. <b>+1</b>):</p>
             <input
               type="tel"
               autoFocus

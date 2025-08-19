@@ -1,16 +1,17 @@
 import { Page, test, expect } from 'playwright/test';
-import { LogInMethod, LogInMethodList } from '../lib';
+import { LoginMethodName, LoginMethodList } from '../lib';
 
 async function gotoTestApp({
   page,
   methods,
   requireVerification,
   allowAnonymous,
+  // For historical reasons, we use popup=true instead of redirect=false.
   popup,
   link,
 }: {
   page: Page,
-  methods?: LogInMethodList;
+  methods?: LoginMethodList;
   requireVerification?: boolean;
   allowAnonymous?: boolean;
   popup?: boolean;
@@ -63,6 +64,15 @@ async function getVerificationCode(phoneNumber: string) {
   return code.code;
 }
 
+function scopesFromUrl(url: string) {
+  const params = new URLSearchParams(new URL(url).search);
+  const scopes = params.get('scopes');
+  if (!scopes) {
+    return [];
+  }
+  return scopes.split(',').map(scope => scope.trim());
+}
+
 // Sometimes nothing happens when the test clicks on the "Add new account"
 // button in the Firebase Auth emulator's simulated SSO provider page. No idea
 // why. This retries it several times until the email input appears.
@@ -83,7 +93,7 @@ async function clickAddNewAccount(page: Page) {
 }
 
 type ProviderLabels = {
-  method: Exclude<LogInMethod, 'email' | 'email_link' | 'phone'>;
+  method: Exclude<LoginMethodName, 'email' | 'email_link' | 'phone'>;
   providerName: string;
   buttonName: string;
 };
@@ -586,7 +596,7 @@ test.describe('Phone authentication', () => {
     await page.getByRole('button', { name: '📱 Sign in with Phone' }).click();
 
     // Should see the phone number form
-    await expect(page.locator('#root')).toContainText('Sign in with your phone number:');
+    await expect(page.locator('#root')).toContainText('Sign in with your phone number');
     await page.getByRole('button', { name: 'Cancel' }).click();
     await expect(page.locator('#root')).toContainText('Sign in with Google');
 
@@ -621,7 +631,7 @@ test.describe('Phone authentication', () => {
     await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
 
     // Should go straight to phone form since it's the only method
-    await expect(page.locator('#root')).toContainText('Sign in with your phone number:');
+    await expect(page.locator('#root')).toContainText('Sign in with your phone number');
     await expect(page.getByRole('button', { name: 'Cancel' })).not.toBeVisible();
 
     await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
@@ -644,7 +654,7 @@ test.describe('Phone authentication', () => {
     await page.getByRole('button', { name: '📱 Sign in with Phone' }).click();
 
     // Should see the phone form
-    await expect(page.locator('#root')).toContainText('Sign in with your phone number:');
+    await expect(page.locator('#root')).toContainText('Sign in with your phone number');
     await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
     await page.getByRole('button', { name: 'Send Code' }).click();
     await expect(page.locator('#root')).toContainText(`Enter the verification code sent to ${phoneNumber}:`);
@@ -666,7 +676,7 @@ test.describe('Phone authentication', () => {
     await page.getByRole('button', { name: '📱 Sign in with Phone' }).click();
 
     // Should see the phone form
-    await expect(page.locator('#root')).toContainText('Sign in with your phone number:');
+    await expect(page.locator('#root')).toContainText('Sign in with your phone number');
     await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
     await page.getByRole('button', { name: 'Send Code' }).click();
     await expect(page.locator('#root')).toContainText(`Enter the verification code sent to ${phoneNumber}:`);
@@ -677,5 +687,43 @@ test.describe('Phone authentication', () => {
     // Should be logged in now with same UID (linking worked)
     await expect(page.locator('#root')).toContainText(`Logged in as ${phoneNumber}`);
     await expect(page.locator('#uid')).toContainText(anonUid);
+  });
+});
+
+test.describe('OAuth scopes', () => {
+  test(`using google with redirect`, async ({ page }) => {
+    const email = uniqueEmail();
+    await gotoTestApp({ page, methods: ['email', ['google', { scopes: ['scope1', 'scopeB'] }]] });
+    await page.getByRole('button', { name: `Sign in with Google` }).click();
+    await expect(page.locator('body')).toContainText(`Sign-in with google.com`, { ignoreCase: true });
+    // There's no easy way to check a logged in user for scopes, but we can at
+    // least check that they're requested in the redirect URL.
+    const scopes = scopesFromUrl(page.url());
+    expect(scopes).toContain('scope1');
+    expect(scopes).toContain('scopeB');
+    await clickAddNewAccount(page);
+    await page.getByLabel('Email').fill(email);
+    await page.getByLabel('Display name').fill('User Name');
+    await page.getByRole('button', { name: `Sign in with google.com` }).click();
+    await expect(page.locator('body')).toContainText(`Logged in as ${email}`);
+  });
+
+  test(`using facebook with popup`, async ({ page }) => {
+    const email = uniqueEmail();
+    await gotoTestApp({ page, popup: true, methods: ['email', ['facebook', { scopes: ['scope1', 'scopeB'] }]] });
+    const page1Promise = page.waitForEvent('popup');
+    await page.getByRole('button', { name: `Sign in with Facebook` }).click();
+    const page1 = await page1Promise;
+    await expect(page1.locator('body')).toContainText(`Sign-in with facebook.com`, { ignoreCase: true });
+    // There's no easy way to check a logged in user for scopes, but we can at
+    // least check that they're requested in the popup URL.
+    const scopes = scopesFromUrl(page1.url());
+    expect(scopes).toContain('scope1');
+    expect(scopes).toContain('scopeB');
+    await clickAddNewAccount(page1);
+    await page1.getByLabel('Email').fill(email);
+    await page1.getByLabel('Display name').fill('User Name');
+    await page1.getByRole('button', { name: `Sign in with facebook.com` }).click();
+    await expect(page.locator('body')).toContainText(`Logged in as ${email}`);
   });
 });
