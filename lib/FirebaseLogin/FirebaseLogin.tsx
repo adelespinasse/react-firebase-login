@@ -574,10 +574,12 @@ requested it, and it can only be used once.');
 
     return (
       <div
-        style={containerStyle}
+        style={{ alignItems: 'center', ...containerStyle}}
         className="react-firebase-login-ui-container"
       >
-        { methods.map(methodMap) }
+        <div style={{ width: 'fit-content' }} className="react-firebase-login-button-container">
+          { methods.map(methodMap) }
+        </div>
       </div>
     );
   };
