@@ -40,9 +40,12 @@ function uniqueEmail() {
 }
 
 function uniquePhoneNumber() {
-  // Generate a random 10-digit phone number with +1 prefix
-  const number = Math.floor(Math.random() * 9000000000) + 1000000000;
-  return `+1${number}`;
+  // Generate a random 10-digit US phone number with +1 prefix
+  // Using area codes that are valid for testing (555 is reserved for testing)
+  const areaCode = 555;
+  const exchange = Math.floor(Math.random() * 900) + 100; // 100-999
+  const number = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
+  return `+1${areaCode}${exchange}${number}`;
 }
 
 async function getVerificationCode(phoneNumber: string) {
@@ -592,7 +595,10 @@ test.describe('Phone authentication', () => {
 
     // Now actually fill out the form
     await page.getByRole('button', { name: '📱 Sign in with Phone' }).click();
-    await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
+    // Ensure US is selected in the country selector
+    await page.selectOption('[aria-label="Phone number country"]', 'US');
+    // Enter phone number without the +1 prefix since US is selected
+    await page.getByPlaceholder('Enter phone number').fill(phoneNumber.replace(/^\+1/, ''));
 
     // In the Firebase Auth emulator, we need to handle the reCAPTCHA mock
     await page.getByRole('button', { name: 'Send Code' }).click();
@@ -624,7 +630,10 @@ test.describe('Phone authentication', () => {
     await expect(page.locator('#root')).toContainText('Sign in with your phone number:');
     await expect(page.getByRole('button', { name: 'Cancel' })).not.toBeVisible();
 
-    await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
+    // Ensure US is selected in the country selector
+    await page.selectOption('[aria-label="Phone number country"]', 'US');
+    // Enter phone number without the +1 prefix since US is selected
+    await page.getByPlaceholder('Enter phone number').fill(phoneNumber.replace(/^\+1/, ''));
     await page.getByRole('button', { name: 'Send Code' }).click();
     await expect(page.locator('#root')).toContainText(`Enter the verification code sent to ${phoneNumber}:`);
 
@@ -645,7 +654,10 @@ test.describe('Phone authentication', () => {
 
     // Should see the phone form
     await expect(page.locator('#root')).toContainText('Sign in with your phone number:');
-    await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
+    // Ensure US is selected in the country selector
+    await page.selectOption('[aria-label="Phone number country"]', 'US');
+    // Enter phone number without the +1 prefix since US is selected
+    await page.getByPlaceholder('Enter phone number').fill(phoneNumber.replace(/^\+1/, ''));
     await page.getByRole('button', { name: 'Send Code' }).click();
     await expect(page.locator('#root')).toContainText(`Enter the verification code sent to ${phoneNumber}:`);
     const verificationCode3 = await getVerificationCode(phoneNumber);
@@ -667,7 +679,10 @@ test.describe('Phone authentication', () => {
 
     // Should see the phone form
     await expect(page.locator('#root')).toContainText('Sign in with your phone number:');
-    await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
+    // Ensure US is selected in the country selector
+    await page.selectOption('[aria-label="Phone number country"]', 'US');
+    // Enter phone number without the +1 prefix since US is selected
+    await page.getByPlaceholder('Enter phone number').fill(phoneNumber.replace(/^\+1/, ''));
     await page.getByRole('button', { name: 'Send Code' }).click();
     await expect(page.locator('#root')).toContainText(`Enter the verification code sent to ${phoneNumber}:`);
     const verificationCode4 = await getVerificationCode(phoneNumber);

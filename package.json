@@ -106,6 +106,7 @@
     "react-dom": "^19.0.0"
   },
   "dependencies": {
+    "react-phone-number-input": "^3.4.12",
     "react-social-login-buttons": "^4.1.1"
   }
 }

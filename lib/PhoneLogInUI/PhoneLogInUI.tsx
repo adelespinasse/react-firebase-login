@@ -9,6 +9,8 @@ import {
   type ConfirmationResult,
 } from 'firebase/auth';
 import { type FirebaseError } from 'firebase/app';
+import PhoneInput, { type Country } from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 import { containerStyle, formatFirebaseError } from '../shared';
 
@@ -138,18 +140,17 @@ export function PhoneLogInUI({ auth, onClose, handleUserCredential, linking }: P
             }}
           >
             <p>Sign in with your phone number:</p>
-            <input
-              type="tel"
-              autoFocus
-              key="phone-input"
+            <PhoneInput
+              placeholder="Enter phone number"
               value={phoneNumber}
-              onChange={(e) => {
-                setPhoneNumber(e.target.value);
+              onChange={(value) => {
+                setPhoneNumber(value || '');
                 setError(null);
               }}
-              placeholder="Phone number (e.g., +1234567890)"
+              defaultCountry={(new Intl.Locale(navigator.language).region || 'US') as Country}
               style={inputStyle}
               disabled={loading}
+              autoFocus
             />
             <div id="recaptcha-container"></div>
             <div style={buttonContainerStyle}>
