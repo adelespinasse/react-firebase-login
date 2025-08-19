@@ -3,7 +3,7 @@ import {
   fullPageFrame,
   LogoutButton,
   useAuth,
-  type LogInMethodList,
+  type LoginMethodList,
 } from '../lib';
 
 function InnerContent({ link }: { link: boolean }) {
@@ -33,7 +33,7 @@ function InnerContent({ link }: { link: boolean }) {
 
 export function FirebaseLoginStory() {
   const params = new URLSearchParams(window.location.search);
-  const methods = JSON.parse(params.get('methods') || '["google"]') as LogInMethodList;
+  const methods = JSON.parse(params.get('methods') || '["google"]') as LoginMethodList;
   const requireVerification = params.get('requireVerification') === 'true';
   const allowAnonymous = params.get('allowAnonymous') === 'true';
   const popup = params.get('popup') === 'true';
@@ -43,7 +43,7 @@ export function FirebaseLoginStory() {
       methods={methods}
       requireVerification={requireVerification}
       allowAnonymous={allowAnonymous}
-      popup={popup}
+      redirect={!popup}
       header={<h2>Firebase Login Test</h2>}
       footer={<p>login test footer</p>}
       frame={fullPageFrame}

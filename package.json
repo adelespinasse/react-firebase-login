@@ -42,7 +42,7 @@
   "scripts": {
     "dev": "firebase emulators:start --only auth,ui & storybook dev -p 6006",
     "demo": "firebase emulators:start --only auth,ui & vite --config vite.config.demo.ts",
-    "demo:prod": "npm run build:demo && vite preview --config vite.config.demo.ts",
+    "demo:prod": "npm run build:demo && firebase emulators:start --only hosting",
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "storybook build",
