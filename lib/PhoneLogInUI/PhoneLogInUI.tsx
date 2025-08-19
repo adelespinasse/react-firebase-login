@@ -38,6 +38,8 @@ export type PhoneInputComponentProps = {
 
 /** Options for the phone login method. */
 export type PhoneOptions = {
+  /** A custom input component to use instead of the default one. The component
+   * must implement {@link PhoneInputComponentProps}. */
   inputComponent?: React.FunctionComponent<PhoneInputComponentProps>;
 };
 

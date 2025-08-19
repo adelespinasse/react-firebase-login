@@ -68,7 +68,8 @@ export type OAuthOptions = {
   scopes?: string[];
 };
 
-/** A login method with any options it supports. */
+/** A login method with any options it supports.
+ * @expand */
 export type LoginMethodWithOptions = readonly ['apple', OAuthOptions?]
    | readonly ['facebook', OAuthOptions?]
    | readonly ['github', OAuthOptions?]
@@ -85,7 +86,7 @@ export type LoginMethodWithOptions = readonly ['apple', OAuthOptions?]
  * ({@link LoginMethodWithOptions}). */
 export type LoginMethod = LoginMethodName | LoginMethodWithOptions;
 
-/** An array of {@link LoginMethodName}s. Should not contain duplicates, nor
+/** An array of {@link LoginMethod}s. Should not contain duplicates, nor
  * should it ever contain both `email` and `email_link`, but those restrictions
  * are not checked. */
 export type LoginMethodList = readonly LoginMethod[];
