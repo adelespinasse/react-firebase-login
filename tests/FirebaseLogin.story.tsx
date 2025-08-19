@@ -36,6 +36,7 @@ export function FirebaseLoginStory() {
   const methods = JSON.parse(params.get('methods') || '["google"]') as LoginMethodList;
   const requireVerification = params.get('requireVerification') === 'true';
   const allowAnonymous = params.get('allowAnonymous') === 'true';
+  // For historical reasons, we use popup=true instead of redirect=false.
   const popup = params.get('popup') === 'true';
   const link = params.get('linkAccount') === 'true';
   return (

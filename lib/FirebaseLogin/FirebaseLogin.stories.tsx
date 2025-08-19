@@ -29,7 +29,7 @@ function UserProfile() {
 
 export const Default: Story = {
   args: {
-    popup: false,
+    redirect: false,
     requireVerification: false,
     header: <h2>Welcome</h2>,
     footer: 'Please sign in to continue',
@@ -44,10 +44,10 @@ export const MultipleMethods: Story = {
   },
 };
 
-export const WithPopup: Story = {
+export const WithRedirect: Story = {
   args: {
     ...Default.args,
-    popup: true,
+    redirect: true,
   },
 };
 
@@ -87,7 +87,7 @@ export const AnonymousAllowed: Story = {
     ...Default.args,
     methods: ['google', 'email'],
     allowAnonymous: true,
-    popup: true,
+    redirect: false,
     children: <AnonymousChildren />,
   },
 };

@@ -6,6 +6,7 @@ async function gotoTestApp({
   methods,
   requireVerification,
   allowAnonymous,
+  // For historical reasons, we use popup=true instead of redirect=false.
   popup,
   link,
 }: {
