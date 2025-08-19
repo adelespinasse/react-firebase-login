@@ -45,7 +45,7 @@ import {
 
 import { EmailLogInUI } from '../EmailLogInUI';
 import { EmailLinkLogInUI, EMAIL_FOR_SIGNIN_KEY } from '../EmailLinkLogInUI';
-import { PhoneLogInUI } from '../PhoneLogInUI';
+import { PhoneLogInUI, type PhoneOptions } from '../PhoneLogInUI';
 import { LogoutButton } from '../LogoutButton/LogoutButton';
 import { containerStyle, formatFirebaseError } from '../shared';
 import { type FrameFunction, noFrame } from '../frames';
@@ -78,7 +78,7 @@ export type LoginMethodWithOptions = readonly ['apple', OAuthOptions?]
    | readonly ['yahoo', OAuthOptions?]
    | readonly ['email']
    | readonly ['email_link']
-   | readonly ['phone'];
+   | readonly ['phone', PhoneOptions?];
 
 /** A login method can be specified with either just the name
  * ({@link LoginMethodName}), or a tuple of the name plus options
@@ -564,11 +564,13 @@ requested it, and it can only be used once.');
     }
 
     if (page === 'phone') {
+      const phoneOptions = methods.find(m => m[0] === 'phone')?.[1];
       return <PhoneLogInUI
         auth={authInstance}
         onClose={onlyPhone ? undefined : () => setPage('home')}
         handleUserCredential={handleUserCredential}
         linking={linking}
+        options={phoneOptions}
       />;
     }
 

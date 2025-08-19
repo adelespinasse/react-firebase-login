@@ -4,6 +4,7 @@ import {
   LogoutButton,
   useAuth,
   type LoginMethodList,
+  type PhoneInputComponentProps,
 } from '../lib';
 
 function InnerContent({ link }: { link: boolean }) {
@@ -31,9 +32,30 @@ function InnerContent({ link }: { link: boolean }) {
   );
 }
 
+function AltPhoneInputComponent({ value, onChange, disabled }: PhoneInputComponentProps) {
+  return (
+    <div style={{ border: '2px solid #00c' }}>
+      <p>This is an alternative phone input</p>
+      <input
+        type="tel"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Phone numberrr"
+        style={{ border: '3px solid #00c' }}
+        disabled={disabled}
+      />
+    </div>
+  );
+}
+
 export function FirebaseLoginStory() {
   const params = new URLSearchParams(window.location.search);
-  const methods = JSON.parse(params.get('methods') || '["google"]') as LoginMethodList;
+  const methodList = JSON.parse(params.get('methods') || '["google"]');
+  const methods = methodList.map((method) => (
+    method[0] === 'phone' && method[1] === 'altInput'
+      ? ['phone', { inputComponent: AltPhoneInputComponent }]
+      : method
+  )) as LoginMethodList;
   const requireVerification = params.get('requireVerification') === 'true';
   const allowAnonymous = params.get('allowAnonymous') === 'true';
   // For historical reasons, we use popup=true instead of redirect=false.

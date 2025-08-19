@@ -1,5 +1,12 @@
+// These are end-to-end/integration tests. They use Playwright to interact with
+// the test app defined in `testapp/`, running with the Firebase emulator.
+
 import { Page, test, expect } from 'playwright/test';
-import { LoginMethodName, LoginMethodList } from '../lib';
+import type { LoginMethod, LoginMethodName } from '../lib';
+
+// For passing the login methods as URL search parameters, we add a special
+// type that the test app can understand.
+type LoginMethodExpanded = LoginMethod | ['phone', 'altInput'];
 
 async function gotoTestApp({
   page,
@@ -11,7 +18,7 @@ async function gotoTestApp({
   link,
 }: {
   page: Page,
-  methods?: LoginMethodList;
+  methods?: LoginMethodExpanded[];
   requireVerification?: boolean;
   allowAnonymous?: boolean;
   popup?: boolean;
@@ -635,6 +642,26 @@ test.describe('Phone authentication', () => {
     await expect(page.getByRole('button', { name: 'Cancel' })).not.toBeVisible();
 
     await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
+    await page.getByRole('button', { name: 'Send Code' }).click();
+    await expect(page.locator('#root')).toContainText(`Enter the verification code sent to ${phoneNumber}:`);
+
+    const verificationCode2 = await getVerificationCode(phoneNumber);
+    await page.getByRole('textbox', { name: 'Verification code' }).fill(verificationCode2);
+    await page.getByRole('button', { name: 'Verify' }).click();
+
+    await expect(page.locator('#root')).toContainText(`Logged in as ${phoneNumber}`);
+  });
+
+  test('phone with alternative input element', async ({ page }) => {
+    const phoneNumber = uniquePhoneNumber();
+    await gotoTestApp({ page, methods: [['phone', 'altInput']] });
+    await expect(page.getByRole('heading')).toContainText('Firebase Login Test');
+
+    // Should go straight to phone form since it's the only method
+    await expect(page.locator('#root')).toContainText('This is an alternative phone input');
+    await expect(page.getByRole('button', { name: 'Cancel' })).not.toBeVisible();
+
+    await page.getByRole('textbox', { name: 'Phone numberrr' }).fill(phoneNumber);
     await page.getByRole('button', { name: 'Send Code' }).click();
     await expect(page.locator('#root')).toContainText(`Enter the verification code sent to ${phoneNumber}:`);
 
