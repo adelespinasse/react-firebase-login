@@ -1,1 +1,1 @@
-export { PhoneLogInUI, type PhoneLogInUIProps } from './PhoneLogInUI';
+export * from './PhoneLogInUI';

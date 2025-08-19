@@ -17,7 +17,7 @@ function InnerContent() {
   return (
     <div className="inner-content">
       <p>
-        Logged in as { user.email }
+        Logged in as { user.isAnonymous ? 'Anonymous' : user.email || user.phoneNumber || '(No email or phone)' }
       </p>
       Full user object:
       <pre style={{ maxWidth: '800px', overflow: 'auto', border: '1px solid #ccc', padding: '10px', borderRadius: '5px' }}>{JSON.stringify(user, null, 2)}</pre>

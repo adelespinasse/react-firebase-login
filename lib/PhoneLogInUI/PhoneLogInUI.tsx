@@ -27,14 +27,47 @@ const inputStyle = {
   width: '100%',
 };
 
+/** A custom input component for the phone login method should implement these
+ * props. It should display the input control(s) AND any instructions that are
+ * needed (e.g. "Enter your phone number with country code"). */
+export type PhoneInputComponentProps = {
+  value: string;
+  onChange: (value: string) => void;
+  disabled: boolean;
+};
+
+/** Options for the phone login method. */
+export type PhoneOptions = {
+  inputComponent?: React.FunctionComponent<PhoneInputComponentProps>;
+};
+
 export type PhoneLogInUIProps = {
   auth: Auth;
   onClose?: () => void;
   handleUserCredential: (credential: UserCredential) => Promise<void>;
   linking: boolean;
+  options?: PhoneOptions;
 };
 
-export function PhoneLogInUI({ auth, onClose, handleUserCredential, linking }: PhoneLogInUIProps) {
+function DefaultInputComponent({ value, onChange, disabled }: PhoneInputComponentProps) {
+  return (
+    <>
+      <p>Sign in with your phone number (including country code, e.g. <b>+1</b>):</p>
+      <input
+        type="tel"
+        autoFocus
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Phone number (e.g., +1234567890)"
+        style={inputStyle}
+        disabled={disabled}
+      />
+    </>
+  );
+}
+
+export function PhoneLogInUI({ auth, onClose, handleUserCredential, linking, options }: PhoneLogInUIProps) {
+  const InputComponent = options?.inputComponent || DefaultInputComponent;
   const [loginState, setLoginState] = useState<'phone' | 'verify'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('+1 ');
   const [verificationCode, setVerificationCode] = useState('');
@@ -137,18 +170,12 @@ export function PhoneLogInUI({ auth, onClose, handleUserCredential, linking }: P
               sendCode();
             }}
           >
-            <p>Sign in with your phone number (including country code, e.g. <b>+1</b>):</p>
-            <input
-              type="tel"
-              autoFocus
-              key="phone-input"
+            <InputComponent
               value={phoneNumber}
-              onChange={(e) => {
-                setPhoneNumber(e.target.value);
+              onChange={(value) => {
+                setPhoneNumber(value);
                 setError(null);
               }}
-              placeholder="Phone number (e.g., +1234567890)"
-              style={inputStyle}
               disabled={loading}
             />
             <div id="recaptcha-container"></div>
