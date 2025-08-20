@@ -8,6 +8,7 @@ import type { LoginMethod, LoginMethodName } from '../lib';
 // type that the test app can understand.
 type LoginMethodExpanded = LoginMethod | ['phone', 'altInput'];
 
+// Navigate to the test app with specified configuration options
 async function gotoTestApp({
   page,
   methods,
@@ -43,16 +44,19 @@ async function gotoTestApp({
   await page.goto(`http://localhost:5173/?${params.toString()}`);
 }
 
+// Generate a unique email address for testing
 function uniqueEmail() {
   return `${crypto.randomUUID()}@domain.tld`;
 }
 
+// Generate a unique phone number for testing
 function uniquePhoneNumber() {
   // Generate a random 10-digit phone number with +1 prefix
   const number = Math.floor(Math.random() * 9000000000) + 1000000000;
   return `+1${number}`;
 }
 
+// Get SMS verification code for a phone number from Firebase emulator
 async function getVerificationCode(phoneNumber: string) {
   // Wait a bit for the code to be generated
   await new Promise(resolve => setTimeout(resolve, 1000));
@@ -71,6 +75,23 @@ async function getVerificationCode(phoneNumber: string) {
   return code.code;
 }
 
+// Fetch all out-of-band codes (verification emails, password reset links) from Firebase emulator
+async function getOobCodes() {
+  const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
+  expect(response.ok).toBeTruthy();
+  const data = await response.json();
+  return data.oobCodes;
+}
+
+// Get email verification link for a specific email address from Firebase emulator
+async function getEmailLinkCode(email: string) {
+  const oobCodes = await getOobCodes();
+  const code = oobCodes.find((code) => code.email === email);
+  expect(code).toBeDefined();
+  return code;
+}
+
+// Extract OAuth scopes from URL search parameters
 function scopesFromUrl(url: string) {
   const params = new URLSearchParams(new URL(url).search);
   const scopes = params.get('scopes');
@@ -199,11 +220,7 @@ test.describe('Login-logout with n', () => {
     await expect(page.locator('#root')).toContainText('Open the link on this device and browser to sign in');
 
     // Get the email link from the Firebase emulator
-    const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
-    expect(response.ok).toBeTruthy();
-    const data = await response.json();
-    const code = data.oobCodes.find((code) => code.email === email);
-    expect(code).toBeDefined();
+    const code = await getEmailLinkCode(email);
 
     // Navigate to the sign-in link
     await page.goto(code.oobLink);
@@ -238,11 +255,7 @@ test.describe('Login-logout with n', () => {
     await expect(page.locator('#root')).toContainText(`A link has been sent to ${email}`);
 
     // Get the email link from the Firebase emulator
-    const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
-    expect(response.ok).toBeTruthy();
-    const data = await response.json();
-    const code = data.oobCodes.find((code) => code.email === email);
-    expect(code).toBeDefined();
+    const code = await getEmailLinkCode(email);
 
     // Navigate to the sign-in link
     await page.goto(code.oobLink);
@@ -268,10 +281,8 @@ test.describe('Login-logout with n', () => {
     await page.getByRole('button', { name: 'Resend Link' }).click();
 
     // Make sure the link was "sent" twice
-    const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
-    expect(response.ok).toBeTruthy();
-    const data = await response.json();
-    const codes = data.oobCodes.filter((code) => code.email === email);
+    const oobCodes = await getOobCodes();
+    const codes = oobCodes.filter((code) => code.email === email);
     expect(codes.length).toBe(2);
   });
 });
@@ -336,11 +347,7 @@ test.describe('Login-logout with email', () => {
 
     // Simulate user clicking the verification link in their email. The
     // Firebase Emulator provides an API for things like this.
-    const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
-    expect(response.ok).toBeTruthy();
-    const data = await response.json();
-    const code = data.oobCodes.find((code) => code.email === email);
-    expect(code).toBeDefined();
+    const code = await getEmailLinkCode(email);
     const verifyResponse = await fetch(code.oobLink);
     expect(verifyResponse.ok).toBeTruthy();
 
@@ -366,10 +373,8 @@ test.describe('Login-logout with email', () => {
     await page.getByRole('button', { name: 'Resend email' }).click();
 
     // Make sure the "email" was "sent" twice.
-    const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
-    expect(response.ok).toBeTruthy();
-    const data = await response.json();
-    const codes = data.oobCodes.filter((code) => code.email === email);
+    const oobCodes = await getOobCodes();
+    const codes = oobCodes.filter((code) => code.email === email);
     expect(codes.length).toBe(2);
   });
 
@@ -522,11 +527,7 @@ test.describe('Anonymous auth', () => {
 
     // Simulate user clicking the verification link in their email. The
     // Firebase Emulator provides an API for things like this.
-    const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
-    expect(response.ok).toBeTruthy();
-    const data = await response.json();
-    const code = data.oobCodes.find((code) => code.email === email);
-    expect(code).toBeDefined();
+    const code = await getEmailLinkCode(email);
     const verifyResponse = await fetch(code.oobLink);
     expect(verifyResponse.ok).toBeTruthy();
 
@@ -550,11 +551,7 @@ test.describe('Anonymous auth', () => {
     await expect(page.locator('#root')).toContainText(`A link has been sent to ${email}`);
 
     // Get the email link from the Firebase emulator
-    const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
-    expect(response.ok).toBeTruthy();
-    const data = await response.json();
-    const code = data.oobCodes.find((code) => code.email === email);
-    expect(code).toBeDefined();
+    const code = await getEmailLinkCode(email);
 
     // Navigate to the sign-in link
     await page.goto(code.oobLink);
@@ -579,11 +576,7 @@ test.describe('Anonymous auth', () => {
     await expect(page.locator('#root')).toContainText(`A link has been sent to ${email}`);
 
     // Get the email link from the Firebase emulator
-    const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
-    expect(response.ok).toBeTruthy();
-    const data = await response.json();
-    const code = data.oobCodes.find((code) => code.email === email);
-    expect(code).toBeDefined();
+    const code = await getEmailLinkCode(email);
 
     // Navigate to the sign-in link
     await page.goto(code.oobLink);
