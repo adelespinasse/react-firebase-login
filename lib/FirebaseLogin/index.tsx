@@ -46,7 +46,7 @@ import {
 import { EmailLogInUI } from '../EmailLogInUI';
 import { EmailLinkLogInUI, EMAIL_FOR_SIGNIN_KEY } from '../EmailLinkLogInUI';
 import { PhoneLogInUI, type PhoneOptions } from '../PhoneLogInUI';
-import { LogoutButton } from '../LogoutButton/LogoutButton';
+import { LogoutButton } from '../LogoutButton';
 import { containerStyle, formatFirebaseError } from '../shared';
 import { type FrameFunction, noFrame } from '../frames';
 import { AuthContext } from './useAuth';
@@ -675,3 +675,4 @@ requested it, and it can only be used once.');
     </AuthContext.Provider>
   );
 }
+

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { FirebaseLogin } from './FirebaseLogin';
-import { useAuth } from './useAuth';
+import { FirebaseLogin } from './';
+import { useAuth } from '../';
 import { LogoutButton } from '../LogoutButton';
 import { fullPageFrame } from '../frames';
 
