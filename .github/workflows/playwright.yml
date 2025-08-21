@@ -14,7 +14,7 @@ jobs:
       run: npm ci
     - name: Get installed Playwright version
       id: playwright-version
-      run: echo "version=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_OUTPUT
+      run: echo "version=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/experimental-ct-react'].version)")" >> $GITHUB_OUTPUT
     - name: Cache playwright binaries
       uses: actions/cache@v4
       id: playwright-cache
