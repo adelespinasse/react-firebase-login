@@ -14,7 +14,7 @@ export default defineConfig({
     dts({ rollupTypes: true }), // Output .d.ts files
   ],
   build: {
-    minify: false,
+    minify: true,
     lib: {
       entry: resolve(__dirname, join('lib', 'index.ts')),
       fileName: 'index',
