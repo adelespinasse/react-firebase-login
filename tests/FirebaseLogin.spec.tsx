@@ -602,7 +602,7 @@ test.describe('Phone authentication', () => {
 
     // Now actually fill out the form
     await page.getByRole('button', { name: '📱 Sign in with Phone' }).click();
-    await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
+    await page.getByRole('textbox', { name: 'e.g. +1 234 555 6789' }).fill(phoneNumber);
 
     // In the Firebase Auth emulator, we need to handle the reCAPTCHA mock
     await page.getByRole('button', { name: 'Send Code' }).click();
@@ -634,7 +634,7 @@ test.describe('Phone authentication', () => {
     await expect(page.locator('#root')).toContainText('Sign in with your phone number');
     await expect(page.getByRole('button', { name: 'Cancel' })).not.toBeVisible();
 
-    await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
+    await page.getByRole('textbox', { name: 'e.g. +1 234 555 6789' }).fill(phoneNumber);
     await page.getByRole('button', { name: 'Send Code' }).click();
     await expect(page.locator('#root')).toContainText(`Enter the verification code sent to ${phoneNumber}:`);
 
@@ -675,7 +675,7 @@ test.describe('Phone authentication', () => {
 
     // Should see the phone form
     await expect(page.locator('#root')).toContainText('Sign in with your phone number');
-    await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
+    await page.getByRole('textbox', { name: 'e.g. +1 234 555 6789' }).fill(phoneNumber);
     await page.getByRole('button', { name: 'Send Code' }).click();
     await expect(page.locator('#root')).toContainText(`Enter the verification code sent to ${phoneNumber}:`);
     const verificationCode3 = await getVerificationCode(phoneNumber);
@@ -697,7 +697,7 @@ test.describe('Phone authentication', () => {
 
     // Should see the phone form
     await expect(page.locator('#root')).toContainText('Sign in with your phone number');
-    await page.getByRole('textbox', { name: 'Phone number (e.g., +1234567890)' }).fill(phoneNumber);
+    await page.getByRole('textbox', { name: 'e.g. +1 234 555 6789' }).fill(phoneNumber);
     await page.getByRole('button', { name: 'Send Code' }).click();
     await expect(page.locator('#root')).toContainText(`Enter the verification code sent to ${phoneNumber}:`);
     const verificationCode4 = await getVerificationCode(phoneNumber);
