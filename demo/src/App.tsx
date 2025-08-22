@@ -36,7 +36,7 @@ function App() {
     <FirebaseLogin
       methods={['google', 'facebook', 'github', 'email', 'phone']}
       header={<h1>react-firebase-login demo</h1>}
-      footer={<a href="https://github.com/adelespinasse/react-firebase-login">View project on GitHub</a>}
+      footer={<a href="https://rfldocs.web.app">Documentation</a>}
       frame={fullPageFrame}
     >
       <InnerContent />

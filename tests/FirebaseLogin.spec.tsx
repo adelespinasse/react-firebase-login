@@ -59,7 +59,7 @@ function uniquePhoneNumber() {
 // Get SMS verification code for a phone number from Firebase emulator
 async function getVerificationCode(phoneNumber: string) {
   // Wait a bit for the code to be generated
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise(resolve => setTimeout(resolve, 250));
 
   const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/verificationCodes');
   expect(response.ok).toBeTruthy();
@@ -77,6 +77,7 @@ async function getVerificationCode(phoneNumber: string) {
 
 // Fetch all out-of-band codes (verification emails, password reset links) from Firebase emulator
 async function getOobCodes() {
+  await new Promise(resolve => setTimeout(resolve, 250));
   const response = await fetch('http://localhost:9099/emulator/v1/projects/react-firebase-login-273c0/oobCodes');
   expect(response.ok).toBeTruthy();
   const data = await response.json();

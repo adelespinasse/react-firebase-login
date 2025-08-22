@@ -633,6 +633,26 @@ requested it, and it can only be used once.');
         )}
         {children}
         {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+        <div style={{
+          display: 'block',
+          position: 'relative',
+          background: 'solid #fff',
+          color: '#000',
+          fontSize: 10,
+          fontFamily: 'sans-serif',
+          padding: '0 0 8px',
+        }}>
+          Login widget by{' '}
+          <a href="https://rfldocs.web.app/" target="_blank" rel="noreferrer" style={{
+            color: '#922',
+            background: 'transparent',
+            fontSize: 11,
+            textDecoration: 'underline',
+            cursor: 'pointer',
+          }}>
+            @aldel/react-firebase-login
+          </a>
+        </div>
         {footer}
       </div>
     );
