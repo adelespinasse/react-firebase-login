@@ -145,6 +145,11 @@ export type FirebaseLoginProps = {
   frame?: FrameFunction;
   /** The children to render when the user is authenticated. */
   children?: React.ReactNode;
+  /** Props to pass through to the "Sign in with" buttons. See
+   * [react-social-login-buttons](https://www.npmjs.com/package/react-social-login-buttons#props)
+   * for supported props. The `onClick` and `disabled` props will not work,
+   * since they are used internally. */
+  socialLoginButtonProps?: Parameters<typeof GoogleLoginButton>[0];
 };
 
 const EmailLoginButton = createButton({
@@ -193,6 +198,7 @@ export function FirebaseLogin({
   redirect,
   header = null,
   footer = null,
+  socialLoginButtonProps,
   frame = noFrame,
   children,
 }: FirebaseLoginProps) {
@@ -451,6 +457,7 @@ requested it, and it can only be used once.');
     switch (name) {
       case 'apple': return (
         <AppleLoginButton
+          {...socialLoginButtonProps}
           onClick={() => doOAuthSignIn(new OAuthProvider('apple.com'), options)}
           disabled={loading}
           key="apple"
@@ -460,6 +467,7 @@ requested it, and it can only be used once.');
       );
       case 'facebook': return (
         <FacebookLoginButton
+          {...socialLoginButtonProps}
           onClick={() => doOAuthSignIn(new FacebookAuthProvider(), options)}
           disabled={loading}
           key="facebook"
@@ -469,6 +477,7 @@ requested it, and it can only be used once.');
       );
       case 'github': return (
         <GithubLoginButton
+          {...socialLoginButtonProps}
           onClick={() => doOAuthSignIn(new GithubAuthProvider(), options)}
           disabled={loading}
           key="github"
@@ -478,6 +487,7 @@ requested it, and it can only be used once.');
       );
       case 'google': return (
         <GoogleLoginButton
+          {...socialLoginButtonProps}
           onClick={() => doOAuthSignIn(new GoogleAuthProvider(), options)}
           disabled={loading}
           key="google"
@@ -487,6 +497,7 @@ requested it, and it can only be used once.');
       );
       case 'microsoft': return (
         <MicrosoftLoginButton
+          {...socialLoginButtonProps}
           onClick={() => doOAuthSignIn(new OAuthProvider('microsoft.com'), options)}
           disabled={loading}
           key="microsoft"
@@ -496,6 +507,7 @@ requested it, and it can only be used once.');
       );
       case 'twitter' : return (
         <XLoginButton
+          {...socialLoginButtonProps}
           onClick={() => doOAuthSignIn(new TwitterAuthProvider(), options)}
           disabled={loading}
           key="twitter"
@@ -505,6 +517,7 @@ requested it, and it can only be used once.');
       );
       case 'yahoo': return (
         <YahooLoginButton
+          {...socialLoginButtonProps}
           onClick={() => doOAuthSignIn(new OAuthProvider('yahoo.com'), options)}
           disabled={loading}
           key="yahoo"
@@ -514,6 +527,7 @@ requested it, and it can only be used once.');
       );
       case 'email': return (
         <EmailLoginButton
+          {...socialLoginButtonProps}
           onClick={() => {
             setError(null);
             setPage('email');
@@ -524,6 +538,7 @@ requested it, and it can only be used once.');
       );
       case 'email_link': return (
         <EmailLoginButton
+          {...socialLoginButtonProps}
           onClick={() => {
             setError(null);
             setPage('email_link');
@@ -534,6 +549,7 @@ requested it, and it can only be used once.');
       );
       case 'phone': return (
         <PhoneLoginButton
+          {...socialLoginButtonProps}
           onClick={() => {
             setError(null);
             setPage('phone');
