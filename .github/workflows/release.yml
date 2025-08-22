@@ -57,3 +57,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.npm_token }}
         run: npx semantic-release
+
+      - run: npm run build:demo
+      - run: npm run build:docs
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_REACT_FIREBASE_LOGIN_273C0 }}
+          channelId: live
+          projectId: react-firebase-login-273c0
