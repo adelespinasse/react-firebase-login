@@ -34,7 +34,7 @@ function InnerContent() {
 function App() {
   return (
     <FirebaseLogin
-      methods={[['google', { scopes: ['scope1', 'scopeB']}], 'facebook', 'github', 'email', 'phone']}
+      methods={['google', 'facebook', 'github', 'email', 'phone']}
       header={<h1>react-firebase-login demo</h1>}
       footer={<a href="https://github.com/adelespinasse/react-firebase-login">View project on GitHub</a>}
       frame={fullPageFrame}
