@@ -57,7 +57,7 @@
     "test": "npx firebase-tools emulators:exec --only auth ./run-playwright-tests.sh",
     "test-ui": "firebase emulators:exec --only auth,ui ./run-playwright-tests-ui.sh",
     "test-report": "playwright show-report",
-    "docs": "typedoc"
+    "build:docs": "typedoc"
   },
   "devDependencies": {
     "@playwright/experimental-ct-react": "^1.54.2",
