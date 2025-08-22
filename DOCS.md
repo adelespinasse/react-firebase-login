@@ -1,3 +1,5 @@
+**LICENSE NOTICE: This package is not available yet. I'm still figuring out how licensing will work. I'm currently leaning towards free use as long as the "Login widget by..." notice remains visible; use with the notice removed would probably be available with a paid license (at a pretty reasonable one-time price).** Send inquiries to [me](mailto:adelespinasse@gmail.com).
+
 # react-firebase-login
 
 This package provides a React component that makes it extremely simple to do [Firebase Authentication](https://firebase.google.com/docs/auth) sign-in for your React web app.

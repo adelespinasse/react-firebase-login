@@ -13,7 +13,4 @@ export const containerStyle: React.CSSProperties = {
   flexDirection: 'column',
   width: '100%',
   maxWidth: '25em',
-  backgroundColor: '#fff',
-  color: '#000',
-  padding: '1em',
 };
