@@ -1,6 +1,7 @@
 {
   "hosting": [
     {
+      "site": "react-firebase-login-273c0",
       "public": "demo/dist",
       "ignore": [
         "firebase.json",
