@@ -71,7 +71,7 @@ function DefaultInputComponent({ value, onChange, disabled }: PhoneInputComponen
 export function PhoneLogInUI({ auth, onClose, handleUserCredential, linking, options }: PhoneLogInUIProps) {
   const InputComponent = options?.inputComponent || DefaultInputComponent;
   const [loginState, setLoginState] = useState<'phone' | 'verify'>('phone');
-  const [phoneNumber, setPhoneNumber] = useState('+1 ');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
