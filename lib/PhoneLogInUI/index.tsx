@@ -60,7 +60,7 @@ function DefaultInputComponent({ value, onChange, disabled }: PhoneInputComponen
         autoFocus
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Phone number (e.g., +1234567890)"
+        placeholder="Phone number (e.g., +1 234 555 6789)"
         style={inputStyle}
         disabled={disabled}
       />
