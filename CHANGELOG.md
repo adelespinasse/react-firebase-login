@@ -4,9 +4,3 @@
 ### Bug Fixes
 
 * changelog and stuff ([e4a1b24](https://github.com/adelespinasse/react-firebase-login/commit/e4a1b24aaa3694db7afcbccf0d79292609228136))
-
----
-title: Changelog
----
-
-file created 2025-08-23
