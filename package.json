@@ -10,13 +10,17 @@
     "signin",
     "signup"
   ],
-  "homepage": "https://github.com/adelespinasse/react-firebase-login",
+  "homepage": "https://rfldocs.web.app/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adelespinasse/react-firebase-login"
+  },
   "bugs": "https://github.com/adelespinasse/react-firebase-login/issues",
   "author": {
     "name": "Alan deLespinasse",
     "url": "https://aldel.com"
   },
-  "license": "UNLICENSED",
+  "license": "Custom dual community / commercial license, see LICENSE.md",
   "type": "module",
   "files": [
     "dist"
