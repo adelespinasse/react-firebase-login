@@ -1,3 +1,10 @@
+## [3.1.7](https://github.com/adelespinasse/react-firebase-login/compare/v3.1.6...v3.1.7) (2025-08-26)
+
+
+### Bug Fixes
+
+* package.json metadata ([8e48e75](https://github.com/adelespinasse/react-firebase-login/commit/8e48e75886ff15a1ed32e35948039daa4992efa2))
+
 ## [3.1.6](https://github.com/adelespinasse/react-firebase-login/compare/v3.1.5...v3.1.6) (2025-08-26)
 
 
