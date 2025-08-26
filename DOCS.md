@@ -32,7 +32,13 @@ function App() {
 export default App;
 ```
 
-That shows a "Sign in with Google" button when the user is not logged in, and "Ok, you are logged in!" when they are.
+That shows a "Sign in with Google" button when the user is not logged in:
+
+<img src="images/rfl-simplest.png" alt="Login UI" width="300">
+
+And "Ok, you are logged in!" when they are:
+
+<img src="images/rfl-simplest-authed.png" alt="Logged in" width="288">
 
 Here's a more complete example:
 
