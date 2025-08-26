@@ -1,5 +1,6 @@
 /** @type {Partial<import("typedoc").TypeDocOptions>} */
 
+// eslint-disable-next-line no-undef
 const versionLinkText = process.env.LATEST_RELEASE || "Changelog";
 
 const config = {
@@ -11,7 +12,7 @@ const config = {
     'Email aldel': 'mailto:adelespinasse@gmail.com',
     'aldel home page': 'https://aldel.com',
   },
-  projectDocuments: ['CHANGELOG.md'],
+  projectDocuments: ['CHANGELOG.md', 'LICENSE.md', 'PRICING.md'],
   kindSortOrder: ['Function', 'Variable', 'Class', 'Interface', 'TypeAlias'],
   searchInDocuments: true,
 }
