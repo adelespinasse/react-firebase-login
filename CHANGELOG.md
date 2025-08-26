@@ -1,3 +1,10 @@
+## [3.1.4](https://github.com/adelespinasse/react-firebase-login/compare/v3.1.3...v3.1.4) (2025-08-26)
+
+
+### Bug Fixes
+
+* license, copyright notices, pricing ([e60f79f](https://github.com/adelespinasse/react-firebase-login/commit/e60f79ff338089531df338a2c6d55741dc52f7c4))
+
 ## [3.1.3](https://github.com/adelespinasse/react-firebase-login/compare/v3.1.2...v3.1.3) (2025-08-25)
 
 
