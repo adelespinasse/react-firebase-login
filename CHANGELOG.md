@@ -1,3 +1,10 @@
+## [3.1.5](https://github.com/adelespinasse/react-firebase-login/compare/v3.1.4...v3.1.5) (2025-08-26)
+
+
+### Bug Fixes
+
+* README ([c330ef5](https://github.com/adelespinasse/react-firebase-login/commit/c330ef5ef2217bf61357ebcebe22e741077068dd))
+
 ## [3.1.4](https://github.com/adelespinasse/react-firebase-login/compare/v3.1.3...v3.1.4) (2025-08-26)
 
 
