@@ -1,3 +1,10 @@
+## [3.1.6](https://github.com/adelespinasse/react-firebase-login/compare/v3.1.5...v3.1.6) (2025-08-26)
+
+
+### Bug Fixes
+
+* Broken images ([5b7f4a7](https://github.com/adelespinasse/react-firebase-login/commit/5b7f4a77cd3f4a530f962ee5ed45ee41df470b29))
+
 ## [3.1.5](https://github.com/adelespinasse/react-firebase-login/compare/v3.1.4...v3.1.5) (2025-08-26)
 
 
