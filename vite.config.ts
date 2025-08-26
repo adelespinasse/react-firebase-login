@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path';
 import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
+import banner from 'vite-plugin-banner';
 
 import { dependencies, peerDependencies } from './package.json';
 
@@ -10,6 +11,11 @@ export default defineConfig({
   plugins: [
     react(),
     dts({ rollupTypes: true }), // Output .d.ts files
+    banner(`// @aldel/react-firebase-login
+// Copyright © 2025 Alan deLespinasse
+// Dual license (See LICENSE.md for details):
+// - Free use in applications with user-visible attribution
+// - Paid license available without attribution`),
   ],
   build: {
     minify: true,

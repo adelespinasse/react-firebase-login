@@ -1,3 +1,8 @@
+// @aldel/react-firebase-login
+// Copyright © 2025 Alan deLespinasse
+// Dual license (See LICENSE.md for details):
+// - Free use in applications with user-visible attribution
+// - Paid license available without attribution
 import { useCallback, useState } from 'react';
 import {
   type Auth,
