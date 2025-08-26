@@ -26,11 +26,11 @@ export default App;
 ```
 That looks like this when the user is not signed in:
 
-<img src="images/rfl-simplest.png" alt="Login UI" width="300">
+<img src="https://rfldocs.web.app/media/rfl-simplest.png" alt="Login UI" width="300">
 
 And like this when they are:
 
-<img src="images/rfl-simplest-authed.png" alt="Login UI" width="288">
+<img src="https://rfldocs.web.app/media/rfl-simplest-authed.png" alt="Logged in" width="288">
 
 [Full documentation](https://rfldocs.web.app)
 
