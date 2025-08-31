@@ -1,3 +1,10 @@
+## [3.1.8](https://github.com/adelespinasse/react-firebase-login/compare/v3.1.7...v3.1.8) (2025-08-31)
+
+
+### Bug Fixes
+
+* more permissive peer dependencies ([e157b91](https://github.com/adelespinasse/react-firebase-login/commit/e157b9178c824a3a5fb941cd72ecd8ea6b7aa8bb))
+
 ## [3.1.7](https://github.com/adelespinasse/react-firebase-login/compare/v3.1.6...v3.1.7) (2025-08-26)
 
 
