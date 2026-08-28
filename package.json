@@ -20,7 +20,7 @@
     "name": "Alan deLespinasse",
     "url": "https://aldel.com"
   },
-  "license": "Custom dual community / commercial license, see LICENSE.md",
+  "license": "MIT",
   "type": "module",
   "files": [
     "dist"

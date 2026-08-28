@@ -1,6 +1,3 @@
-**LICENSE NOTICE:** This is **not "free software".** This package is released under a [dual license](https://rfldocs.web.app/documents/LICENSE.html): you can use it for free in applications, with a **user-visible attribution notice**, or license it [for a fee](https://rfldocs.web.app/documents/PRICING.html) to use without the attribution notice. See the [license](https://rfldocs.web.app/documents/LICENSE.html) for full details.
-
-Send inquiries to [me](mailto:adelespinasse@gmail.com).
 
 # @aldel/react-firebase-login
 
@@ -48,6 +45,6 @@ And like this when they are:
 
 ## License
 
-[Dual community / commercial license](https://rfldocs.web.app/documents/LICENSE.html)
+MIT
 
 (c) 2025 Alan deLespinasse

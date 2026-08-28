@@ -12,7 +12,7 @@ const config = {
     'Email aldel': 'mailto:adelespinasse@gmail.com',
     'aldel home page': 'https://aldel.com',
   },
-  projectDocuments: ['CHANGELOG.md', 'LICENSE.md', 'PRICING.md'],
+  projectDocuments: ['CHANGELOG.md', 'LICENSE.md'],
   kindSortOrder: ['Function', 'Variable', 'Class', 'Interface', 'TypeAlias'],
   searchInDocuments: true,
 }

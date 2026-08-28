@@ -13,9 +13,7 @@ export default defineConfig({
     dts({ rollupTypes: true }), // Output .d.ts files
     banner(`// @aldel/react-firebase-login
 // Copyright © 2025 Alan deLespinasse
-// Dual license (See LICENSE.md for details):
-// - Free use in applications with user-visible attribution
-// - Paid license available without attribution`),
+// License: MIT`),
   ],
   build: {
     minify: true,
