@@ -1,8 +1,6 @@
 // @aldel/react-firebase-login
 // Copyright © 2025 Alan deLespinasse
-// Dual license (See LICENSE.md for details):
-// - Free use in applications with user-visible attribution
-// - Paid license available without attribution
+// License: MIT
 import {
   useCallback,
   useEffect,
@@ -647,7 +645,7 @@ requested it, and it can only be used once.');
           fontFamily: 'sans-serif',
           padding: '0 0 8px',
         }}>
-          Login widget by{' '}
+          {/* Login widget by{' '}
           <a href="https://rfldocs.web.app/" target="_blank" rel="noreferrer" style={{
             color: '#922',
             background: 'transparent',
@@ -656,7 +654,7 @@ requested it, and it can only be used once.');
             cursor: 'pointer',
           }}>
             @aldel/react-firebase-login
-          </a>
+          </a> */}
         </div>
         {footer}
       </div>

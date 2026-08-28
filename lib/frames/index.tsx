@@ -1,8 +1,6 @@
 // @aldel/react-firebase-login
 // Copyright © 2025 Alan deLespinasse
-// Dual license (See LICENSE.md for details):
-// - Free use in applications with user-visible attribution
-// - Paid license available without attribution
+// License: MIT
 
 /** A function that modifies rendered React content. The input is generally included in the
  * output as children of a wrapper component. Used for the `frame` prop of the
