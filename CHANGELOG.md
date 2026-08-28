@@ -1,3 +1,10 @@
+## [3.1.10](https://github.com/adelespinasse/react-firebase-login/compare/v3.1.9...v3.1.10) (2026-08-28)
+
+
+### Bug Fixes
+
+* Switch to MIT license ([54482a9](https://github.com/adelespinasse/react-firebase-login/commit/54482a97fd542a6fc851f7460cc7d2ba329447d1))
+
 ## [3.1.9](https://github.com/adelespinasse/react-firebase-login/compare/v3.1.8...v3.1.9) (2025-08-31)
 
 
